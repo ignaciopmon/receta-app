@@ -37,17 +37,33 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
-    return NextResponse.redirect(url)
+  const pathname = request.nextUrl.pathname
+
+  // --- NUEVA LÓGICA DE REDIRECCIÓN ---
+
+  // 1. Si el usuario ESTÁ logueado
+  if (user) {
+    // Si intenta acceder a la homepage o a las páginas de auth, redirigir a /recipes
+    if (pathname === "/" || pathname.startsWith("/auth")) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/recipes"
+      return NextResponse.redirect(url)
+    }
   }
+
+  // 2. Si el usuario NO ESTÁ logueado
+  if (!user) {
+    // Si intenta acceder a cualquier página protegida (que NO sea / o /auth/*)
+    // redirigir a /auth/login
+    if (pathname !== "/" && !pathname.startsWith("/auth")) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/login"
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // --- FIN DE LA NUEVA LÓGICA ---
+
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
