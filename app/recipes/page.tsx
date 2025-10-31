@@ -85,7 +85,7 @@ export default function RecipesPage() {
         .from("recipes")
         .select("*")
         .eq("user_id", user.id)
-        .is("deleted_at", null) // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+        .is("deleted_at", null) // Mantenemos la corrección anterior
         .order("created_at", { ascending: false })
 
       if (fetchError) {
@@ -205,6 +205,7 @@ export default function RecipesPage() {
                   steps={recipe.steps}
                   imageUrl={recipe.image_url}
                   link={recipe.link}
+                  onUpdate={fetchRecipes} // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
                 />
               ))}
             </div>

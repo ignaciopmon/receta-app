@@ -16,11 +16,12 @@ interface RecipeCardProps {
   steps: string[]
   imageUrl?: string | null
   link?: string | null
+  onUpdate: () => void // <-- 1. AÑADIMOS ESTA PROPIEDAD
 }
 
-export function RecipeCard({ id, name, ingredients, steps, imageUrl, link }: RecipeCardProps) {
+export function RecipeCard({ id, name, ingredients, steps, imageUrl, link, onUpdate }: RecipeCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
-  const router = useRouter()
+  const router = useRouter() // Mantenemos el router por si acaso, aunque no para refresh
   const supabase = createClient()
 
   const handleDelete = async () => {
@@ -31,7 +32,9 @@ export function RecipeCard({ id, name, ingredients, steps, imageUrl, link }: Rec
       const { error } = await supabase.from("recipes").update({ deleted_at: new Date().toISOString() }).eq("id", id)
 
       if (error) throw error
-      router.refresh()
+      
+      onUpdate() // <-- 2. LLAMAMOS A onUpdate() EN LUGAR DE router.refresh()
+
     } catch (error) {
       console.error("Error deleting recipe:", error)
       alert("Failed to delete recipe")
