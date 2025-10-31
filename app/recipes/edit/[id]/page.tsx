@@ -22,6 +22,7 @@ export default async function EditRecipePage({
     .select("*")
     .eq("id", id)
     .eq("user_id", data.user.id)
+    .is("deleted_at", null) // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
     .single()
 
   if (recipeError || !recipe) {
