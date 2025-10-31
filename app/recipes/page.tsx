@@ -24,6 +24,7 @@ interface Recipe {
   servings: number | null
   is_favorite: boolean
   tags: string[] | null
+  rating: number | null // <-- AÑADIR RATING
 }
 
 export default function RecipesPage() {
@@ -33,6 +34,7 @@ export default function RecipesPage() {
   const [category, setCategory] = useState("all")
   const [difficulty, setDifficulty] = useState("all")
   const [showFavorites, setShowFavorites] = useState(false)
+  const [rating, setRating] = useState("all") // <-- NUEVO ESTADO
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -57,9 +59,12 @@ export default function RecipesPage() {
 
   useEffect(() => {
     filterRecipes()
-  }, [recipes, searchQuery, category, difficulty, showFavorites])
+  }, [recipes, searchQuery, category, difficulty, showFavorites, rating]) // <-- AÑADIR RATING
 
   const fetchRecipes = async () => {
+    // Nota: 'setIsLoading(true)' se mueve aquí para que se muestre el spinner
+    // en cada recarga, incluyendo borrados y favoritos.
+    setIsLoading(true) 
     try {
       setError(null)
       const {
@@ -83,9 +88,9 @@ export default function RecipesPage() {
 
       const { data, error: fetchError } = await supabase
         .from("recipes")
-        .select("*")
+        .select("*") // 'rating' se incluye con '*' gracias al script SQL
         .eq("user_id", user.id)
-        .is("deleted_at", null) // Mantenemos la corrección anterior
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
 
       if (fetchError) {
@@ -134,6 +139,19 @@ export default function RecipesPage() {
     if (showFavorites) {
       filtered = filtered.filter((recipe) => recipe.is_favorite)
     }
+
+    // --- NUEVO FILTRO DE RATING ---
+    if (rating !== "all") {
+      const minRating = Number(rating)
+      if (minRating === 0) {
+        // "Unrated"
+        filtered = filtered.filter((recipe) => recipe.rating === 0 || recipe.rating === null)
+      } else {
+        // "X+ Stars"
+        filtered = filtered.filter((recipe) => recipe.rating !== null && recipe.rating >= minRating)
+      }
+    }
+    // ----------------------------
 
     setFilteredRecipes(filtered)
   }
@@ -190,6 +208,8 @@ export default function RecipesPage() {
                 onDifficultyChange={setDifficulty}
                 showFavorites={showFavorites}
                 onToggleFavorites={() => setShowFavorites(!showFavorites)}
+                rating={rating} // <-- PASAR PROP
+                onRatingChange={setRating} // <-- PASAR PROP
               />
             </div>
           )}
@@ -205,7 +225,13 @@ export default function RecipesPage() {
                   steps={recipe.steps}
                   imageUrl={recipe.image_url}
                   link={recipe.link}
-                  onUpdate={fetchRecipes} // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+                  onUpdate={fetchRecipes}
+                  // --- PASAR NUEVAS PROPS ---
+                  category={recipe.category}
+                  difficulty={recipe.difficulty}
+                  isFavorite={recipe.is_favorite}
+                  rating={recipe.rating}
+                  // --------------------------
                 />
               ))}
             </div>
@@ -225,6 +251,7 @@ export default function RecipesPage() {
                   setCategory("all")
                   setDifficulty("all")
                   setShowFavorites(false)
+                  setRating("all") // <-- RESETEAR RATING
                 }}
               >
                 Clear Filters

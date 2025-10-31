@@ -11,6 +11,10 @@ interface RecipeFiltersProps {
   onDifficultyChange: (value: string) => void
   showFavorites: boolean
   onToggleFavorites: () => void
+  // --- AÑADIR ESTAS PROPS ---
+  rating: string
+  onRatingChange: (value: string) => void
+  // -------------------------
 }
 
 export function RecipeFilters({
@@ -20,6 +24,9 @@ export function RecipeFilters({
   onDifficultyChange,
   showFavorites,
   onToggleFavorites,
+  // --- AÑADIR ESTAS PROPS ---
+  rating,
+  onRatingChange,
 }: RecipeFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -54,6 +61,23 @@ export function RecipeFilters({
           <SelectItem value="hard">Hard</SelectItem>
         </SelectContent>
       </Select>
+      
+      {/* --- NUEVO FILTRO DE RATING --- */}
+      <Select value={rating} onValueChange={onRatingChange}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="Rating" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Ratings</SelectItem>
+          <SelectItem value="5">5 Stars</SelectItem>
+          <SelectItem value="4">4+ Stars</SelectItem>
+          <SelectItem value="3">3+ Stars</SelectItem>
+          <SelectItem value="2">2+ Stars</SelectItem>
+          <SelectItem value="1">1+ Star</SelectItem>
+          <SelectItem value="0">Unrated</SelectItem>
+        </SelectContent>
+      </Select>
+      {/* ----------------------------- */}
 
       <Button variant={showFavorites ? "default" : "outline"} size="sm" onClick={onToggleFavorites}>
         <Star className={`mr-2 h-4 w-4 ${showFavorites ? "fill-current" : ""}`} />

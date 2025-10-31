@@ -22,7 +22,7 @@ export default async function EditRecipePage({
     .select("*")
     .eq("id", id)
     .eq("user_id", data.user.id)
-    .is("deleted_at", null) // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+    .is("deleted_at", null)
     .single()
 
   if (recipeError || !recipe) {
@@ -45,6 +45,12 @@ export default async function EditRecipePage({
             initialSteps={recipe.steps}
             initialLink={recipe.link}
             initialImageUrl={recipe.image_url}
+            // --- AÑADIR ESTAS PROPS ---
+            initialCategory={recipe.category}
+            initialDifficulty={recipe.difficulty}
+            initialIsFavorite={recipe.is_favorite}
+            initialRating={recipe.rating}
+            // -------------------------
           />
         </div>
       </main>

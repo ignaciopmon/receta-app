@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -10,8 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, X, Loader2, CookingPot } from "lucide-react"
+import { Plus, X, Loader2, CookingPot, Star } from "lucide-react"
 import { upload } from "@vercel/blob/client"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 
 interface RecipeFormProps {
   recipeId?: string
@@ -22,6 +23,11 @@ interface RecipeFormProps {
   initialImageUrl?: string | null
   defaultIngredientsCount?: number
   defaultStepsCount?: number
+  // Props for editing
+  initialCategory?: string | null
+  initialDifficulty?: string | null
+  initialIsFavorite?: boolean
+  initialRating?: number | null
 }
 
 export function RecipeForm({
@@ -33,11 +39,17 @@ export function RecipeForm({
   initialImageUrl = null,
   defaultIngredientsCount = 3,
   defaultStepsCount = 3,
+  // Init values for new fields
+  initialCategory = "lunch",
+  initialDifficulty = "easy",
+  initialIsFavorite = false,
+  initialRating = 0,
 }: RecipeFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const isEditing = !!recipeId
 
+  // Form States
   const [name, setName] = useState(initialName)
   const [ingredients, setIngredients] = useState<string[]>(
     initialIngredients || Array(defaultIngredientsCount).fill(""),
@@ -46,6 +58,14 @@ export function RecipeForm({
   const [link, setLink] = useState(initialLink || "")
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initialImageUrl)
+  
+  // New States
+  const [category, setCategory] = useState(initialCategory || "lunch")
+  const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
+  const [rating, setRating] = useState(initialRating || 0)
+
+  // Control States
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -117,9 +137,6 @@ export function RecipeForm({
       } = await supabase.auth.getUser()
       if (!user) throw new Error("User not authenticated")
 
-      console.log("[v0] Current user ID:", user.id)
-      console.log("[v0] Submitting recipe:", { name, filteredIngredients, filteredSteps })
-
       let imageUrl: string | null = initialImageUrl
       if (imageFile) {
         const blob = await upload(imageFile.name, imageFile, {
@@ -130,38 +147,34 @@ export function RecipeForm({
           },
         })
         imageUrl = blob.url
-        console.log("[v0] Image uploaded:", imageUrl)
+      }
+      
+      const recipeData = {
+        name: name.trim(),
+        ingredients: filteredIngredients,
+        steps: filteredSteps,
+        image_url: imageUrl,
+        link: link.trim() || null,
+        // Add new fields
+        category,
+        difficulty,
+        is_favorite: isFavorite,
+        rating,
+        user_id: user.id, // user_id is required for insert
       }
 
       if (isEditing) {
+        // Don't update user_id on edit
+        const { user_id, ...updateData } = recipeData
         const { error: updateError } = await supabase
           .from("recipes")
-          .update({
-            name: name.trim(),
-            ingredients: filteredIngredients,
-            steps: filteredSteps,
-            image_url: imageUrl,
-            link: link.trim() || null,
-          })
+          .update(updateData)
           .eq("id", recipeId)
 
         if (updateError) throw updateError
-        console.log("[v0] Recipe updated successfully")
       } else {
-        const { error: insertError } = await supabase.from("recipes").insert({
-          user_id: user.id,
-          name: name.trim(),
-          ingredients: filteredIngredients,
-          steps: filteredSteps,
-          image_url: imageUrl,
-          link: link.trim() || null,
-        })
-
-        if (insertError) {
-          console.error("[v0] Insert error:", insertError)
-          throw insertError
-        }
-        console.log("[v0] Recipe created successfully with user_id:", user.id)
+        const { error: insertError } = await supabase.from("recipes").insert(recipeData)
+        if (insertError) throw insertError
       }
 
       router.replace("/recipes?t=" + Date.now())
@@ -213,6 +226,70 @@ export function RecipeForm({
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* --- NEW METADATA CARD --- */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif">Details</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="breakfast">Breakfast</SelectItem>
+                <SelectItem value="lunch">Lunch</SelectItem>
+                <SelectItem value="dinner">Dinner</SelectItem>
+                <SelectItem value="dessert">Dessert</SelectItem>
+                <SelectItem value="snack">Snack</SelectItem>
+                <SelectItem value="beverage">Beverage</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="difficulty">Difficulty</Label>
+            <Select value={difficulty} onValueChange={setDifficulty}>
+              <SelectTrigger id="difficulty">
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="rating">Rating</Label>
+            <Select value={String(rating)} onValueChange={(v) => setRating(Number(v))}>
+              <SelectTrigger id="rating">
+                <SelectValue placeholder="Rating" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">No Rating</SelectItem>
+                <SelectItem value="1">1 Star</SelectItem>
+                <SelectItem value="2">2 Stars</SelectItem>
+                <SelectItem value="3">3 Stars</SelectItem>
+                <SelectItem value="4">4 Stars</SelectItem>
+                <SelectItem value="5">5 Stars</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center space-x-3 pt-6">
+             <Switch id="isFavorite" checked={isFavorite} onCheckedChange={setIsFavorite} />
+            <Label htmlFor="isFavorite" className="cursor-pointer">
+              Mark as Favorite
+            </Label>
+          </div>
+
         </CardContent>
       </Card>
 
