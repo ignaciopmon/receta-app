@@ -149,6 +149,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    /* --- CAMBIOS PARA MÓVIL --- */
+    @apply bg-background text-foreground min-h-svh antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* ------------------------- */
   }
 }

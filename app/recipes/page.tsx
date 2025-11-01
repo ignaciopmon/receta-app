@@ -24,7 +24,7 @@ interface Recipe {
   servings: number | null
   is_favorite: boolean
   tags: string[] | null
-  rating: number | null // <-- AÑADIR RATING
+  rating: number | null
 }
 
 export default function RecipesPage() {
@@ -34,7 +34,7 @@ export default function RecipesPage() {
   const [category, setCategory] = useState("all")
   const [difficulty, setDifficulty] = useState("all")
   const [showFavorites, setShowFavorites] = useState(false)
-  const [rating, setRating] = useState("all") // <-- NUEVO ESTADO
+  const [rating, setRating] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -59,11 +59,9 @@ export default function RecipesPage() {
 
   useEffect(() => {
     filterRecipes()
-  }, [recipes, searchQuery, category, difficulty, showFavorites, rating]) // <-- AÑADIR RATING
+  }, [recipes, searchQuery, category, difficulty, showFavorites, rating])
 
   const fetchRecipes = async () => {
-    // Nota: 'setIsLoading(true)' se mueve aquí para que se muestre el spinner
-    // en cada recarga, incluyendo borrados y favoritos.
     setIsLoading(true) 
     try {
       setError(null)
@@ -88,7 +86,7 @@ export default function RecipesPage() {
 
       const { data, error: fetchError } = await supabase
         .from("recipes")
-        .select("*") // 'rating' se incluye con '*' gracias al script SQL
+        .select("*")
         .eq("user_id", user.id)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
@@ -114,7 +112,6 @@ export default function RecipesPage() {
   const filterRecipes = () => {
     let filtered = [...recipes]
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
@@ -125,33 +122,26 @@ export default function RecipesPage() {
       )
     }
 
-    // Category filter
     if (category !== "all") {
       filtered = filtered.filter((recipe) => recipe.category === category)
     }
 
-    // Difficulty filter
     if (difficulty !== "all") {
       filtered = filtered.filter((recipe) => recipe.difficulty === difficulty)
     }
 
-    // Favorites filter
     if (showFavorites) {
       filtered = filtered.filter((recipe) => recipe.is_favorite)
     }
 
-    // --- NUEVO FILTRO DE RATING ---
     if (rating !== "all") {
       const minRating = Number(rating)
       if (minRating === 0) {
-        // "Unrated"
         filtered = filtered.filter((recipe) => recipe.rating === 0 || recipe.rating === null)
       } else {
-        // "X+ Stars"
         filtered = filtered.filter((recipe) => recipe.rating !== null && recipe.rating >= minRating)
       }
     }
-    // ----------------------------
 
     setFilteredRecipes(filtered)
   }
@@ -190,7 +180,8 @@ export default function RecipesPage() {
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto py-8 px-4">
           <div className="mb-8">
-            <h1 className="text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
+            {/* --- TÍTULO RESPONSIVO --- */}
+            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
             <p className="text-muted-foreground text-lg">
               {recipes.length > 0
                 ? `You have ${recipes.length} ${recipes.length === 1 ? "recipe" : "recipes"} saved`
@@ -208,14 +199,14 @@ export default function RecipesPage() {
                 onDifficultyChange={setDifficulty}
                 showFavorites={showFavorites}
                 onToggleFavorites={() => setShowFavorites(!showFavorites)}
-                rating={rating} // <-- PASAR PROP
-                onRatingChange={setRating} // <-- PASAR PROP
+                rating={rating}
+                onRatingChange={setRating}
               />
             </div>
           )}
 
           {filteredRecipes.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}
@@ -226,12 +217,10 @@ export default function RecipesPage() {
                   imageUrl={recipe.image_url}
                   link={recipe.link}
                   onUpdate={fetchRecipes}
-                  // --- PASAR NUEVAS PROPS ---
                   category={recipe.category}
                   difficulty={recipe.difficulty}
                   isFavorite={recipe.is_favorite}
                   rating={recipe.rating}
-                  // --------------------------
                 />
               ))}
             </div>
@@ -251,7 +240,7 @@ export default function RecipesPage() {
                   setCategory("all")
                   setDifficulty("all")
                   setShowFavorites(false)
-                  setRating("all") // <-- RESETEAR RATING
+                  setRating("all")
                 }}
               >
                 Clear Filters

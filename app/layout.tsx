@@ -13,6 +13,15 @@ export const metadata: Metadata = {
   title: "Cocina - Your Recipe Collection",
   description: "Save and organize your favorite recipes",
   generator: "v0.app",
+  // --- AÑADIR ESTO PARA MÓVILES ---
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover", // Para el 'notch' de iPhone
+  },
+  // ------------------------------
 }
 
 export default function RootLayout({

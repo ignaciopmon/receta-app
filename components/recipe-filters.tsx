@@ -11,10 +11,8 @@ interface RecipeFiltersProps {
   onDifficultyChange: (value: string) => void
   showFavorites: boolean
   onToggleFavorites: () => void
-  // --- AÑADIR ESTAS PROPS ---
   rating: string
   onRatingChange: (value: string) => void
-  // -------------------------
 }
 
 export function RecipeFilters({
@@ -24,19 +22,19 @@ export function RecipeFilters({
   onDifficultyChange,
   showFavorites,
   onToggleFavorites,
-  // --- AÑADIR ESTAS PROPS ---
   rating,
   onRatingChange,
 }: RecipeFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="flex items-center gap-2">
+    // --- LAYOUT RESPONSIVO PARA FILTROS ---
+    <div className="flex flex-col sm:flex-row sm:flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2 self-start">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">Filters:</span>
       </div>
 
       <Select value={category} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-full sm:w-[150px]">
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
@@ -51,7 +49,7 @@ export function RecipeFilters({
       </Select>
 
       <Select value={difficulty} onValueChange={onDifficultyChange}>
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-full sm:w-[150px]">
           <SelectValue placeholder="Difficulty" />
         </SelectTrigger>
         <SelectContent>
@@ -62,9 +60,8 @@ export function RecipeFilters({
         </SelectContent>
       </Select>
       
-      {/* --- NUEVO FILTRO DE RATING --- */}
       <Select value={rating} onValueChange={onRatingChange}>
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-full sm:w-[150px]">
           <SelectValue placeholder="Rating" />
         </SelectTrigger>
         <SelectContent>
@@ -77,9 +74,8 @@ export function RecipeFilters({
           <SelectItem value="0">Unrated</SelectItem>
         </SelectContent>
       </Select>
-      {/* ----------------------------- */}
 
-      <Button variant={showFavorites ? "default" : "outline"} size="sm" onClick={onToggleFavorites}>
+      <Button variant={showFavorites ? "default" : "outline"} size="sm" onClick={onToggleFavorites} className="w-full sm:w-auto">
         <Star className={`mr-2 h-4 w-4 ${showFavorites ? "fill-current" : ""}`} />
         Favorites
       </Button>

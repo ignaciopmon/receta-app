@@ -4,7 +4,6 @@ import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-// --- ICONOS ACTUALIZADOS ---
 import { ExternalLink, ArrowLeft, PenSquare } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -40,7 +39,7 @@ export default async function RecipeDetailPage({
       <RecipeHeader />
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto py-8 px-4 max-w-4xl">
-          <Button asChild variant="ghost" className="mb-6">
+          <Button asChild variant="ghost" className="mb-6 -ml-2">
             <Link href="/recipes">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Recipes
@@ -49,30 +48,46 @@ export default async function RecipeDetailPage({
 
           <div className="space-y-6">
             {recipe.image_url && (
-              <div className="relative h-96 w-full overflow-hidden rounded-lg">
+              <div className="relative h-64 md:h-96 w-full overflow-hidden rounded-lg">
                 <Image src={recipe.image_url || "/placeholder.svg"} alt={recipe.name} fill className="object-cover" />
               </div>
             )}
 
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
-              <div className="flex gap-2">
-                <Button asChild variant="outline">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              {/* --- TÍTULO RESPONSIVO --- */}
+              <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
+              
+              {/* --- BOTONES RESPONSIVOS --- */}
+              <div className="flex gap-2 flex-shrink-0">
+                <Button asChild variant="outline" size="icon" className="md:hidden">
                   <Link href={`/recipes/edit/${id}`}>
-                    {/* --- ICONO CAMBIADO --- */}
+                    <PenSquare className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="hidden md:inline-flex">
+                  <Link href={`/recipes/edit/${id}`}>
                     <PenSquare className="mr-2 h-4 w-4" />
                     Edit
                   </Link>
                 </Button>
+                
                 {recipe.link && (
-                  <Button asChild variant="outline">
-                    <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      View Source
-                    </a>
-                  </Button>
+                  <>
+                    <Button asChild variant="outline" size="icon" className="md:hidden">
+                      <a href={recipe.link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" className="hidden md:inline-flex">
+                      <a href={recipe.link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        View Source
+                      </a>
+                    </Button>
+                  </>
                 )}
               </div>
+              {/* ------------------------- */}
             </div>
 
             <Card>
