@@ -12,7 +12,8 @@ export function RecipeHeader() {
           <UtensilsCrossed className="h-6 w-6 text-primary" />
           <span className="text-xl font-serif font-bold">Cocina</span>
         </Link>
-        <div className="flex items-center gap-2">
+        {/* --- CAMBIO AQUÍ: gap-2 A gap-3 --- */}
+        <div className="flex items-center gap-3">
           <Button asChild size="sm">
             <Link href="/recipes/new">
               <NotebookPen className="mr-2 h-4 w-4" />
@@ -20,7 +21,6 @@ export function RecipeHeader() {
             </Link>
           </Button>
           
-          {/* --- BOTÓN DE AJUSTES RESPONSIVO --- */}
           <Button variant="outline" asChild size="icon" className="md:hidden">
             <Link href="/settings">
               <SlidersHorizontal className="h-4 w-4" />
@@ -32,7 +32,6 @@ export function RecipeHeader() {
               Settings
             </Link>
           </Button>
-          {/* ---------------------------------- */}
 
         </div>
       </div>
