@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { UtensilsCrossed, Plus, Settings } from "lucide-react"
+// --- ICONOS ACTUALIZADOS ---
+import { UtensilsCrossed, NotebookPen, SlidersHorizontal } from "lucide-react"
 import Link from "next/link"
 
 export function RecipeHeader() {
@@ -15,13 +16,15 @@ export function RecipeHeader() {
         <div className="flex items-center gap-3">
           <Button asChild>
             <Link href="/recipes/new">
-              <Plus className="mr-2 h-4 w-4" />
+              {/* --- ICONO CAMBIADO --- */}
+              <NotebookPen className="mr-2 h-4 w-4" />
               Add Recipe
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href="/settings">
-              <Settings className="mr-2 h-4 w-4" />
+              {/* --- ICONO CAMBIADO --- */}
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
               Settings
             </Link>
           </Button>

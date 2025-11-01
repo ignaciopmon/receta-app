@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Trash2, RotateCcw, X } from "lucide-react"
+// --- ICONOS ACTUALIZADOS ---
+import { Archive, Undo2, Flame } from "lucide-react"
 
 interface Recipe {
   id: string
@@ -57,7 +58,8 @@ export function TrashSection({ deletedRecipes }: { deletedRecipes: Recipe[] }) {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Trash2 className="h-5 w-5" />
+          {/* --- ICONO CAMBIADO --- */}
+          <Archive className="h-5 w-5" />
           <CardTitle>Trash</CardTitle>
         </div>
         <CardDescription>
@@ -86,7 +88,8 @@ export function TrashSection({ deletedRecipes }: { deletedRecipes: Recipe[] }) {
                     onClick={() => handleRestore(recipe.id)}
                     disabled={isRestoring === recipe.id}
                   >
-                    <RotateCcw className="h-4 w-4 mr-1" />
+                    {/* --- ICONO CAMBIADO --- */}
+                    <Undo2 className="h-4 w-4 mr-1" />
                     Restore
                   </Button>
                   <Button
@@ -95,7 +98,8 @@ export function TrashSection({ deletedRecipes }: { deletedRecipes: Recipe[] }) {
                     onClick={() => handlePermanentDelete(recipe.id)}
                     disabled={isDeleting === recipe.id}
                   >
-                    <X className="h-4 w-4" />
+                    {/* --- ICONO CAMBIADO --- */}
+                    <Flame className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

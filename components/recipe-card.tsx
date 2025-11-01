@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, Trash2, Edit, Star } from "lucide-react"
+// --- ICONOS ACTUALIZADOS ---
+import { ExternalLink, Archive, PenSquare, Star } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
@@ -18,12 +19,10 @@ interface RecipeCardProps {
   imageUrl?: string | null
   link?: string | null
   onUpdate: () => void
-  // --- AÑADIR ESTAS PROPS ---
   category: string | null
   difficulty: string | null
   isFavorite: boolean
   rating: number | null
-  // -------------------------
 }
 
 // Componente helper para las estrellas
@@ -88,7 +87,6 @@ export function RecipeCard({
     }
   }
 
-  // --- NUEVA FUNCIÓN ---
   const handleToggleFavorite = async () => {
     setIsFavoriting(true)
     const newFavoriteState = !currentFavorite
@@ -100,15 +98,14 @@ export function RecipeCard({
 
       if (error) throw error
       
-      setCurrentFavorite(newFavoriteState) // Actualiza el estado local
-      onUpdate() // Refresca la lista de la página principal (para filtros)
+      setCurrentFavorite(newFavoriteState)
+      onUpdate()
     } catch (error) {
       console.error("Error updating favorite:", error)
     } finally {
       setIsFavoriting(false)
     }
   }
-  // --------------------
 
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-lg flex flex-col">
@@ -119,7 +116,6 @@ export function RecipeCard({
       )}
       <CardHeader className="relative">
         <h3 className="text-xl font-serif font-semibold leading-tight text-balance pr-10">{name}</h3>
-        {/* --- BOTÓN DE FAVORITO --- */}
         <Button
           variant="ghost"
           size="icon"
@@ -134,17 +130,14 @@ export function RecipeCard({
             )}
           />
         </Button>
-        {/* ------------------------- */}
       </CardHeader>
       <CardContent className="space-y-4 flex-1">
-        {/* --- MOSTRAR INFO EXTRA --- */}
         <div className="flex flex-wrap items-center gap-2">
           {category && <Badge variant="outline">{category}</Badge>}
           {difficulty && <Badge variant="secondary">{difficulty}</Badge>}
           <div className="flex-1" />
           <StarRating rating={rating} />
         </div>
-        {/* ------------------------ */}
         
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-1">Ingredients ({ingredients.length})</p>
@@ -164,7 +157,8 @@ export function RecipeCard({
         </Button>
         <Button asChild variant="outline" size="icon">
           <Link href={`/recipes/edit/${id}`}>
-            <Edit className="h-4 w-4" />
+            {/* --- ICONO CAMBIADO --- */}
+            <PenSquare className="h-4 w-4" />
           </Link>
         </Button>
         {link && (
@@ -175,7 +169,8 @@ export function RecipeCard({
           </Button>
         )}
         <Button variant="destructive" size="icon" onClick={handleDelete} disabled={isDeleting}>
-          <Trash2 className="h-4 w-4" />
+          {/* --- ICONO CAMBIADO --- */}
+          <Archive className="h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>

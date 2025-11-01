@@ -4,7 +4,8 @@ import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, ArrowLeft, Edit } from "lucide-react"
+// --- ICONOS ACTUALIZADOS ---
+import { ExternalLink, ArrowLeft, PenSquare } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -27,7 +28,7 @@ export default async function RecipeDetailPage({
     .select("*")
     .eq("id", id)
     .eq("user_id", data.user.id)
-    .is("deleted_at", null) // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+    .is("deleted_at", null)
     .single()
 
   if (recipeError || !recipe) {
@@ -58,7 +59,8 @@ export default async function RecipeDetailPage({
               <div className="flex gap-2">
                 <Button asChild variant="outline">
                   <Link href={`/recipes/edit/${id}`}>
-                    <Edit className="mr-2 h-4 w-4" />
+                    {/* --- ICONO CAMBIADO --- */}
+                    <PenSquare className="mr-2 h-4 w-4" />
                     Edit
                   </Link>
                 </Button>

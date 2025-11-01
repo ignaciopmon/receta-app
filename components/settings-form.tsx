@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { LogOut, Save, Palette, ListOrdered } from "lucide-react"
+// --- ICONOS ACTUALIZADOS ---
+import { DoorOpen, CheckCircle, Paintbrush, Baseline } from "lucide-react"
 
 type Theme = "light" | "dark" | "pastel"
 
@@ -44,7 +45,7 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
         default_steps_count: stepsCount,
         updated_at: new Date().toISOString(),
       }, {
-        onConflict: 'user_id' // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+        onConflict: 'user_id'
       })
 
       if (error) throw error
@@ -67,7 +68,8 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
+            {/* --- ICONO CAMBIADO --- */}
+            <Paintbrush className="h-5 w-5" />
             <CardTitle>Theme</CardTitle>
           </div>
           <CardDescription>Choose your preferred color scheme</CardDescription>
@@ -110,7 +112,8 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ListOrdered className="h-5 w-5" />
+            {/* --- ICONO CAMBIADO --- */}
+            <Baseline className="h-5 w-5" />
             <CardTitle>Default Form Fields</CardTitle>
           </div>
           <CardDescription>
@@ -146,12 +149,14 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
 
       <div className="flex gap-3">
         <Button onClick={handleSave} disabled={isSaving} className="flex-1">
-          <Save className="mr-2 h-4 w-4" />
+          {/* --- ICONO CAMBIADO --- */}
+          <CheckCircle className="mr-2 h-4 w-4" />
           {isSaving ? "Saving..." : "Save Settings"}
         </Button>
 
         <Button variant="destructive" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
+          {/* --- ICONO CAMBIADO --- */}
+          <DoorOpen className="mr-2 h-4 w-4" />
           Logout
         </Button>
       </div>
