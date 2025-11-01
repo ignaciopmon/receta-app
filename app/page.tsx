@@ -55,10 +55,10 @@ export default function HomePage() {
         {/* Botones finales */}
         <div className="flex gap-4 justify-center pt-4">
           <Button asChild size="lg">
-            <Link href="/auth/sign-up">Registrarse</Link>
+            <Link href="/auth/sign-up">Sign Up</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/auth/login">Iniciar sesión</Link>
+            <Link href="/auth/login">Log In</Link>
           </Button>
         </div>
       </div>

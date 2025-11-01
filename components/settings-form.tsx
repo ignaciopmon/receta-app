@@ -43,6 +43,8 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
         default_ingredients_count: ingredientsCount,
         default_steps_count: stepsCount,
         updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id' // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
       })
 
       if (error) throw error
