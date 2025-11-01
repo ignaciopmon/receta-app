@@ -8,7 +8,12 @@ import { RecipeSearch } from "@/components/recipe-search"
 import { RecipeFilters } from "@/components/recipe-filters"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { CookingPot, Search } from "lucide-react"
+import { CookingPot, Search, NotebookPen } from "lucide-react"
+
+// --- IMPORTS ACTUALIZADOS ---
+import { RecipeCardSkeleton } from "@/components/recipe-card-skeleton"
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+// ----------------------------
 
 interface Recipe {
   id: string
@@ -105,7 +110,8 @@ export default function RecipesPage() {
       console.error("[v0] Error fetching recipes:", error)
       setError(error instanceof Error ? error.message : "Failed to fetch recipes")
     } finally {
-      setIsLoading(false)
+      // Pequeño retraso para que la animación se aprecie
+      setTimeout(() => setIsLoading(false), 300)
     }
   }
 
@@ -146,23 +152,37 @@ export default function RecipesPage() {
     setFilteredRecipes(filtered)
   }
 
+  // --- ESTADO DE CARGA MEJORADO ---
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <RecipeHeader />
-        <main className="flex-1 bg-muted/30 flex items-center justify-center">
-          <CookingPot className="h-8 w-8 animate-pulse text-muted-foreground" />
+        <main className="flex-1 bg-muted/30">
+          <div className="container mx-auto py-8 px-4">
+            {/* Cabecera fantasma */}
+            <div className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
+              <p className="text-muted-foreground text-lg">Loading your recipes...</p>
+            </div>
+            {/* Grid de Esqueletos */}
+            <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <RecipeCardSkeleton />
+              <RecipeCardSkeleton />
+              <RecipeCardSkeleton />
+            </div>
+          </div>
         </main>
       </div>
     )
   }
+  // ---------------------------------
 
   if (error) {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <RecipeHeader />
         <main className="flex-1 bg-muted/30 flex items-center justify-center">
-          <div className="text-center">
+          <div className="text-center p-4">
             <h2 className="text-xl font-serif font-semibold mb-2">Error</h2>
             <p className="text-muted-foreground">{error}</p>
             <Button onClick={() => fetchRecipes()} className="mt-4">
@@ -180,7 +200,6 @@ export default function RecipesPage() {
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto py-8 px-4">
           <div className="mb-8">
-            {/* --- TÍTULO RESPONSIVO --- */}
             <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
             <p className="text-muted-foreground text-lg">
               {recipes.length > 0
@@ -205,7 +224,29 @@ export default function RecipesPage() {
             </div>
           )}
 
-          {filteredRecipes.length > 0 ? (
+          {recipes.length === 0 ? (
+            // --- ESTADO VACÍO (PRIMER USO) ---
+            <Empty className="py-16">
+              <EmptyMedia variant="icon">
+                <CookingPot className="h-12 w-12" />
+              </EmptyMedia>
+              <EmptyTitle className="text-2xl font-serif font-semibold">
+                No recipes yet
+              </EmptyTitle>
+              <EmptyDescription className="max-w-md">
+                Start your culinary journey by adding your first recipe. Share your favorite dishes and keep them
+                organized in one place.
+              </EmptyDescription>
+              <Button asChild size="lg" className="mt-4">
+                <Link href="/recipes/new">
+                  <NotebookPen className="mr-2 h-5 w-5" />
+                  Add Your First Recipe
+                </Link>
+              </Button>
+            </Empty>
+
+          ) : filteredRecipes.length > 0 ? (
+            // --- LISTA DE RECETAS ---
             <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
@@ -224,17 +265,22 @@ export default function RecipesPage() {
                 />
               ))}
             </div>
-          ) : recipes.length > 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <Search className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-serif font-semibold mb-2">No recipes found</h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
+
+          ) : (
+            // --- ESTADO VACÍO (SIN RESULTADOS) ---
+            <Empty className="py-16">
+              <EmptyMedia variant="icon">
+                <Search className="h-12 w-12" />
+              </EmptyMedia>
+              <EmptyTitle className="text-2xl font-serif font-semibold">
+                No recipes found
+              </EmptyTitle>
+              <EmptyDescription className="max-w-md">
                 Try adjusting your search or filters to find what you're looking for.
-              </p>
+              </EmptyDescription>
               <Button
                 variant="outline"
+                className="mt-4"
                 onClick={() => {
                   setSearchQuery("")
                   setCategory("all")
@@ -245,24 +291,7 @@ export default function RecipesPage() {
               >
                 Clear Filters
               </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <CookingPot className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-serif font-semibold mb-2">No recipes yet</h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Start your culinary journey by adding your first recipe. Share your favorite dishes and keep them
-                organized in one place.
-              </p>
-              <Button asChild size="lg">
-                <Link href="/recipes/new">
-                  <CookingPot className="mr-2 h-5 w-5" />
-                  Add Your First Recipe
-                </Link>
-              </Button>
-            </div>
+            </Empty>
           )}
         </div>
       </main>
