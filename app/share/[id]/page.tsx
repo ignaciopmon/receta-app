@@ -1,52 +1,65 @@
-import { redirect, notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, ArrowLeft, PenSquare } from "lucide-react"
+import { ExternalLink, UtensilsCrossed } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { ShareButton } from "@/components/share-button" // <-- 1. IMPORTAR
-import { Toaster } from "@/components/ui/toaster" // <-- 2. IMPORTAR TOASTER
+import { SaveRecipeButton } from "@/components/save-recipe-button"
 
-export default async function RecipeDetailPage({
+// Esta es una cabecera simple para la página pública
+function ShareHeader() {
+  return (
+    <header className="border-b bg-background">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <Link href="/" className="flex items-center gap-2">
+          <UtensilsCrossed className="h-6 w-6 text-primary" />
+          <span className="text-xl font-serif font-bold">Cocina</span>
+        </Link>
+        <Button asChild variant="outline">
+          <Link href="/auth/login">
+            Login
+          </Link>
+        </Button>
+      </div>
+    </header>
+  )
+}
+
+export default async function ShareRecipePage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = await params
+  const { id } = params
   const supabase = await createClient()
 
-  const { data: userData, error } = await supabase.auth.getUser()
-  if (error || !userData?.user) {
-    redirect("/auth/login")
-  }
-
-  // Fetch the specific recipe
+  // Esta consulta SÓLO funcionará si la RLS que creamos en el Paso 1
+  // (is_public = true) se cumple.
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
     .select("*")
     .eq("id", id)
-    .eq("user_id", userData.user.id)
-    .is("deleted_at", null)
+    .eq("is_public", true)
     .single()
 
+  // Si no hay receta, o no es pública, mostramos un 404
   if (recipeError || !recipe) {
     notFound()
   }
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <RecipeHeader />
+      <ShareHeader />
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto py-8 px-4 max-w-4xl">
-          <Button asChild variant="ghost" className="mb-6 -ml-2">
-            <Link href="/recipes">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Recipes
-            </Link>
-          </Button>
+          
+          {/* --- Botón de Guardar --- */}
+          <div className="mb-6 flex justify-center">
+            {/* @ts-ignore */}
+            <SaveRecipeButton recipeId={recipe.id} />
+          </div>
 
           <div className="space-y-6">
             {recipe.image_url && (
@@ -57,45 +70,14 @@ export default async function RecipeDetailPage({
 
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
-              
-              {/* --- 3. AÑADIR EL BOTÓN DE COMPARTIR --- */}
               <div className="flex gap-2 flex-shrink-0">
-                {/* Botones de móvil */}
-                <div className="md:hidden flex gap-2">
-                  <Button asChild variant="outline" size="icon">
-                    <Link href={`/recipes/edit/${id}`}>
-                      <PenSquare className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  {/* @ts-ignore */}
-                  <ShareButton recipeId={recipe.id} isPublic={recipe.is_public} />
-                </div>
-                {/* Botones de escritorio */}
-                <div className="hidden md:flex gap-2">
-                  <Button asChild variant="outline">
-                    <Link href={`/recipes/edit/${id}`}>
-                      <PenSquare className="mr-2 h-4 w-4" />
-                      Edit
-                    </Link>
-                  </Button>
-                  {/* @ts-ignore */}
-                  <ShareButton recipeId={recipe.id} isPublic={recipe.is_public} />
-                </div>
-                
                 {recipe.link && (
-                  <>
-                    <Button asChild variant="outline" size="icon" className="md:hidden">
-                      <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                    <Button asChild variant="outline" className="hidden md:inline-flex">
-                      <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        View Source
-                      </a>
-                    </Button>
-                  </>
+                  <Button asChild variant="outline">
+                    <a href={recipe.link} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      View Original Source
+                    </a>
+                  </Button>
                 )}
               </div>
             </div>
@@ -138,7 +120,6 @@ export default async function RecipeDetailPage({
           </div>
         </div>
       </main>
-      <Toaster /> {/* <-- 4. AÑADIR EL TOASTER PARA NOTIFICACIONES */}
     </div>
   )
 }
