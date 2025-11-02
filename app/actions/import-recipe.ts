@@ -4,16 +4,25 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import * as cheerio from "cheerio"
 import { redirect } from "next/navigation"
 
-// 1. Inicializa el cliente de Google AI (Gemini)
-// Lee la API key de forma segura desde las variables de entorno
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!)
+// NOTA: La inicialización de 'genAI' se mueve DENTRO de la función
+// para capturar errores de la API key.
 
-// 2. Define la acción que se llamará desde el cliente
 export async function importRecipeFromURL(formData: FormData) {
   const url = formData.get("url") as string
   if (!url) {
     throw new Error("URL is required")
   }
+
+  // --- ¡NUEVA COMPROBACIÓN! ---
+  // Verifica si la API key está presente en el servidor
+  if (!process.env.GOOGLE_GEMINI_API_KEY) {
+    console.error("GOOGLE_GEMINI_API_KEY is not set on the server.")
+    throw new Error("AI service is not configured. Please contact the administrator.")
+  }
+  
+  // 1. Inicializa el cliente de Google AI (Gemini)
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY)
+  // -----------------------------
 
   let recipeTextContent = ""
   let recipeName = ""
@@ -32,8 +41,7 @@ export async function importRecipeFromURL(formData: FormData) {
     // Intenta obtener el título de la página
     recipeName = $("head > title").text()
     
-    // Obtiene el texto del cuerpo. Esto es básico y puede incluir
-    // menús, anuncios, etc., pero se lo pasaremos a la IA para que lo limpie.
+    // Obtiene el texto del cuerpo.
     recipeTextContent = $("body").text()
 
     // Limpia espacios en blanco masivos
