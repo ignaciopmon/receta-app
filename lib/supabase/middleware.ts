@@ -43,14 +43,12 @@ export async function updateSession(request: NextRequest) {
 
   // 2. Si el usuario NO ESTÁ logueado
   if (!user) {
-    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
     // Si intenta acceder a cualquier página protegida (que NO sea /, /auth/*, o /share/*)
     // redirigir a /auth/login
     if (
       pathname !== "/" &&
-      !pathname.startsWith("/login") &&
       !pathname.startsWith("/auth") &&
-      !pathname.startsWith("/share") // <-- ESTA LÍNEA FALTABA
+      !pathname.startsWith("/share") // <-- ¡ESTA ES LA LÍNEA CLAVE!
     ) {
       // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone()
