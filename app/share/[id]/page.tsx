@@ -35,16 +35,18 @@ export default async function ShareRecipePage({
   const { id } = params
   const supabase = await createClient()
 
-  // Esta consulta SÓLO funcionará si la RLS que creamos en el Paso 1
-  // (is_public = true) se cumple.
+  // --- ¡CORRECCIÓN AQUÍ! ---
+  // La consulta ahora también comprueba que "deleted_at" sea NULO.
+  // Esto coincide con la nueva política de RLS.
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
     .select("*")
     .eq("id", id)
     .eq("is_public", true)
+    .is("deleted_at", null) // <-- ESTA LÍNEA ES NUEVA
     .single()
 
-  // Si no hay receta, o no es pública, mostramos un 404
+  // Si no hay receta, o no es pública, o está borrada, mostramos un 404
   if (recipeError || !recipe) {
     notFound()
   }
