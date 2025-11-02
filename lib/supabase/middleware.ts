@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
     if (
       pathname !== "/" &&
       !pathname.startsWith("/auth") &&
-      !pathname.startsWith("/share") // <-- ¡ESTA ES LA LÍNEA CLAVE!
+      !pathname.startsWith("/share") // <-- ESTA LÍNEA ES VITAL
     ) {
       // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone()
