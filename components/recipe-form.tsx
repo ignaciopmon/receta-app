@@ -23,7 +23,6 @@ interface RecipeFormProps {
   initialImageUrl?: string | null
   defaultIngredientsCount?: number
   defaultStepsCount?: number
-  // Props for editing
   initialCategory?: string | null
   initialDifficulty?: string | null
   initialIsFavorite?: boolean
@@ -39,7 +38,6 @@ export function RecipeForm({
   initialImageUrl = null,
   defaultIngredientsCount = 3,
   defaultStepsCount = 3,
-  // Init values for new fields
   initialCategory = "lunch",
   initialDifficulty = "easy",
   initialIsFavorite = false,
@@ -49,23 +47,31 @@ export function RecipeForm({
   const supabase = createClient()
   const isEditing = !!recipeId
 
-  // Form States
   const [name, setName] = useState(initialName)
+  
+  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+  // Comprobamos si initialIngredients existe Y tiene elementos.
   const [ingredients, setIngredients] = useState<string[]>(
-    initialIngredients || Array(defaultIngredientsCount).fill(""),
+    (initialIngredients && initialIngredients.length > 0)
+      ? initialIngredients
+      : Array(defaultIngredientsCount).fill(""),
   )
-  const [steps, setSteps] = useState<string[]>(initialSteps || Array(defaultStepsCount).fill(""))
+  const [steps, setSteps] = useState<string[]>(
+    (initialSteps && initialSteps.length > 0)
+      ? initialSteps
+      : Array(defaultStepsCount).fill(""),
+  )
+  // ---------------------------------
+
   const [link, setLink] = useState(initialLink || "")
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initialImageUrl)
   
-  // New States
   const [category, setCategory] = useState(initialCategory || "lunch")
   const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
   const [rating, setRating] = useState(initialRating || 0)
 
-  // Control States
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -155,16 +161,14 @@ export function RecipeForm({
         steps: filteredSteps,
         image_url: imageUrl,
         link: link.trim() || null,
-        // Add new fields
         category,
         difficulty,
         is_favorite: isFavorite,
         rating,
-        user_id: user.id, // user_id is required for insert
+        user_id: user.id,
       }
 
       if (isEditing) {
-        // Don't update user_id on edit
         const { user_id, ...updateData } = recipeData
         const { error: updateError } = await supabase
           .from("recipes")
@@ -229,7 +233,6 @@ export function RecipeForm({
         </CardContent>
       </Card>
 
-      {/* --- NEW METADATA CARD --- */}
       <Card>
         <CardHeader>
           <CardTitle className="font-serif">Details</CardTitle>
@@ -244,7 +247,7 @@ export function RecipeForm({
               <SelectContent>
                 <SelectItem value="breakfast">Breakfast</SelectItem>
                 <SelectItem value="lunch">Lunch</SelectItem>
-                <SelectItem value="dinner">Dinner</SelectItem>
+                <SelectItem valuea="dinner">Dinner</SelectItem>
                 <SelectItem value="dessert">Dessert</SelectItem>
                 <SelectItem value="snack">Snack</SelectItem>
                 <SelectItem value="beverage">Beverage</SelectItem>
@@ -275,7 +278,7 @@ export function RecipeForm({
               <SelectContent>
                 <SelectItem value="0">No Rating</SelectItem>
                 <SelectItem value="1">1 Star</SelectItem>
-                <SelectItem value="2">2 Stars</SelectItem>
+                <SelectItem valueB="2">2 Stars</SelectItem>
                 <SelectItem value="3">3 Stars</SelectItem>
                 <SelectItem value="4">4 Stars</SelectItem>
                 <SelectItem value="5">5 Stars</SelectItem>
