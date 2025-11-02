@@ -39,23 +39,61 @@ export async function importRecipeFromURL(
     const html = await response.text()
     const $ = cheerio.load(html)
     recipeName = $("head > title").text()
-    recipeTextContent = $("body").text().replace(/\s\s+/g, ' ').trim()
+
+    // --- ¡NUEVA LÓGICA DE SCRAPEO MÁS INTELIGENTE! ---
+    // Intenta encontrar un contenedor de receta específico.
+    // Estas son clases/IDs comunes en blogs de recetas.
+    let $content = 
+      $('[class*="recipe-content"]').first() ||
+      $('[id*="recipe-container"]').first() ||
+      $('[class*="wprm-recipe-container"]').first() ||
+      $('[class*="mv-recipe-card"]').first() ||
+      $('[class*="recipe-card"]').first() ||
+      $('[class*="recipe-main"]').first() ||
+      $('[itemtype*="schema.org/Recipe"]').first()
+
+    if ($content.length > 0) {
+      recipeTextContent = $content.text()
+    } else {
+      // Si no encuentra uno específico, prueba con <main>
+      $content = $("main").first()
+      if ($content.length > 0) {
+        recipeTextContent = $content.text()
+      } else {
+        // Si no, prueba con <article>
+        $content = $("article").first()
+        if ($content.length > 0) {
+          recipeTextContent = $content.text()
+        } else {
+          // Si todo falla, vuelve a usar el body (menos probable que funcione)
+          recipeTextContent = $("body").text()
+        }
+      }
+    }
+    // ------------------------------------------------
+
+    recipeTextContent = recipeTextContent.replace(/\s\s+/g, ' ').trim()
+    
+    if (!recipeTextContent) {
+       return { error: "Could not find any recipe content on that page.", success: false, params: null }
+    }
 
   } catch (error) {
     console.error("Error scraping URL:", error)
     return { error: "Could not read the provided URL. Please check the link.", success: false, params: null }
   }
 
-  // 3. Llamada a Gemini (con el modelo corregido)
+  // 3. Llamada a Gemini
   try {
-    // --- CAMBIO DE MODELO A UNO ESTABLE ---
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    // Usamos el modelo estable 'gemini-1.5-flash-latest' o el que prefieras
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" })
     const prompt = `
       Eres un asistente de cocina experto. Analiza el siguiente texto extraído de una página web y extrae los detalles de la receta.
+      El texto está "sucio" y puede contener anuncios o texto irrelevante. Ignóralo y enfócate en la receta.
       Responde ÚNICAMENTE con un objeto JSON. No incluyas "'''json" ni ningún otro texto antes o después.
 
       El texto a analizar es:
-      "${recipeTextContent.substring(0, 10000)}" 
+      "${recipeTextContent.substring(0, 15000)}" 
 
       Tu objeto JSON debe tener la siguiente estructura:
       {
@@ -67,7 +105,7 @@ export async function importRecipeFromURL(
       }
 
       Analiza el idioma del texto y devuelve los campos "name", "ingredients" y "steps" en ese mismo idioma.
-      Si no puedes encontrar una receta, devuelve un JSON con valores nulos.
+      Si no puedes encontrar una receta, devuelve un JSON con valores nulos para 'ingredients' y 'steps'.
     `
 
     const result = await model.generateContent(prompt)
@@ -83,10 +121,14 @@ export async function importRecipeFromURL(
     params.set('link', url)
 
     if (parsedData.ingredients && Array.isArray(parsedData.ingredients)) {
-      parsedData.ingredients.forEach((ing: string) => params.append('ingredients', ing))
+      parsedData.ingredients.forEach((ing: string) => {
+        if (ing && ing.trim() !== "") params.append('ingredients', ing)
+      })
     }
     if (parsedData.steps && Array.isArray(parsedData.steps)) {
-      parsedData.steps.forEach((step: string) => params.append('steps', step))
+      parsedData.steps.forEach((step: string) => {
+        if (step && step.trim() !== "") params.append('steps', step)
+      })
     }
 
     // 5. Devolver éxito con los parámetros
