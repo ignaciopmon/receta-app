@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { UtensilsCrossed, NotebookPen, SlidersHorizontal } from "lucide-react"
 import Link from "next/link"
+import { RecipeImportDialog } from "@/components/recipe-import-dialog" // <-- 1. IMPORTAR
 
 export function RecipeHeader() {
   return (
@@ -12,8 +13,10 @@ export function RecipeHeader() {
           <UtensilsCrossed className="h-6 w-6 text-primary" />
           <span className="text-xl font-serif font-bold">Cocina</span>
         </Link>
-        {/* --- CAMBIO AQUÍ: gap-2 A gap-3 --- */}
         <div className="flex items-center gap-3">
+          
+          <RecipeImportDialog /> {/* <-- 2. AÑADIR EL BOTÓN DE IMPORTAR */}
+
           <Button asChild size="sm">
             <Link href="/recipes/new">
               <NotebookPen className="mr-2 h-4 w-4" />
