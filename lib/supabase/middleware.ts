@@ -31,8 +31,6 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // --- LÓGICA DE REDIRECCIÓN ACTUALIZADA ---
-
   // 1. Si el usuario ESTÁ logueado
   if (user) {
     // Si intenta acceder a la homepage o a las páginas de auth, redirigir a /recipes
@@ -45,21 +43,21 @@ export async function updateSession(request: NextRequest) {
 
   // 2. Si el usuario NO ESTÁ logueado
   if (!user) {
+    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
     // Si intenta acceder a cualquier página protegida (que NO sea /, /auth/*, o /share/*)
     // redirigir a /auth/login
-    
-    // --- ¡MODIFICACIÓN AQUÍ! ---
     if (
       pathname !== "/" &&
+      !pathname.startsWith("/login") &&
       !pathname.startsWith("/auth") &&
-      !pathname.startsWith("/share") // <-- AÑADIR ESTA EXCEPCIÓN
+      !pathname.startsWith("/share") // <-- ESTA LÍNEA FALTABA
     ) {
+      // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"
       return NextResponse.redirect(url)
     }
   }
-  // -----------------------------
 
   return supabaseResponse
 }
