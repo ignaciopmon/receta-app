@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { ExternalLink, ArrowLeft, PenSquare } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { ShareButton } from "@/components/share-button" // <-- 1. IMPORTAR
-import { Toaster } from "@/components/ui/toaster" // <-- 2. IMPORTAR TOASTER
+import { ShareButton } from "@/components/share-button"
+import { Toaster } from "@/components/ui/toaster"
 
 export default async function RecipeDetailPage({
   params,
@@ -58,10 +58,10 @@ export default async function RecipeDetailPage({
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
               
-              {/* --- 3. AÑADIR EL BOTÓN DE COMPARTIR --- */}
-              <div className="flex gap-2 flex-shrink-0">
+              {/* --- CAMBIO AQUÍ: gap-2 A gap-3 --- */}
+              <div className="flex gap-3 flex-shrink-0">
                 {/* Botones de móvil */}
-                <div className="md:hidden flex gap-2">
+                <div className="md:hidden flex gap-3">
                   <Button asChild variant="outline" size="icon">
                     <Link href={`/recipes/edit/${id}`}>
                       <PenSquare className="h-4 w-4" />
@@ -71,7 +71,7 @@ export default async function RecipeDetailPage({
                   <ShareButton recipeId={recipe.id} isPublic={recipe.is_public} />
                 </div>
                 {/* Botones de escritorio */}
-                <div className="hidden md:flex gap-2">
+                <div className="hidden md:flex gap-3">
                   <Button asChild variant="outline">
                     <Link href={`/recipes/edit/${id}`}>
                       <PenSquare className="mr-2 h-4 w-4" />
@@ -138,7 +138,7 @@ export default async function RecipeDetailPage({
           </div>
         </div>
       </main>
-      <Toaster /> {/* <-- 4. AÑADIR EL TOASTER PARA NOTIFICACIONES */}
+      <Toaster />
     </div>
   )
 }
