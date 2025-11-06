@@ -7,7 +7,13 @@ import { PublicRecipeCard } from "@/components/public-recipe-card"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { User, NotebookPen } from "lucide-react"
 
-// Definición del tipo de Receta (puedes moverlo a un archivo types.ts)
+// --- ¡ESTA ES LA LÍNEA CLAVE! ---
+// Le dice a Vercel/Next.js que NUNCA guarde esta página en caché
+// y que siempre la regenere desde el servidor.
+export const dynamic = 'force-dynamic'
+// -----------------------------------
+
+// Definición del tipo de Receta
 interface Recipe {
   id: string;
   name: string;
@@ -29,15 +35,12 @@ export default async function PublicProfilePage({
   const supabase = await createClient()
   const { username } = params
 
-  // 1. Buscar el perfil por el nombre de usuario
-  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-  // Cambiamos .eq() por .ilike() para ignorar mayúsculas/minúsculas
+  // 1. Buscar el perfil por el nombre de usuario (ignorando mayúsculas)
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .ilike("username", username) // ANTES ERA .eq()
+    .ilike("username", username)
     .single()
-  // ---------------------------------
 
   // Si no se encuentra el perfil, mostrar un 404
   if (profileError || !profile) {
@@ -54,7 +57,6 @@ export default async function PublicProfilePage({
     .order("created_at", { ascending: false })
 
   if (recipesError) {
-    // Puedes optar por un 404 o una página de error
     console.error("Error fetching recipes:", recipesError)
     notFound()
   }
