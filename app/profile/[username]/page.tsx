@@ -35,29 +35,28 @@ export default async function PublicProfilePage({
   let profile = null;
   let profileError = null;
   
-  // --- AÑADIMOS UN BLOQUE try...catch ---
   try {
     // 1. Buscar el perfil por el nombre de usuario (ignorando mayúsculas)
     const { data, error } = await supabase
       .from("profiles")
       .select("id, username")
       .ilike("username", username)
+      .limit(1) // --- ¡ESTA ES LA LÍNEA NUEVA! ---
       .single()
 
-    if (error) throw error; // Lanzamos el error si Supabase lo devuelve
-    if (!data) throw new Error("Profile not found in database."); // Lanzamos un error si no hay datos
+    if (error) throw error; 
+    if (!data) throw new Error("Profile not found in database."); 
 
     profile = data;
 
   } catch (error: any) {
     profileError = error;
   }
-  // --- FIN DEL BLOQUE try...catch ---
 
 
   // Si hay un error de perfil O no se encontró, mostramos el error
   if (profileError || !profile) {
-    // ESTA ES LA PÁGINA DE ERROR TEMPORAL
+    // PÁGINA DE ERROR TEMPORAL
     return (
       <div className="flex min-h-screen w-full flex-col">
         <PublicHeader />
@@ -74,7 +73,6 @@ export default async function PublicProfilePage({
                   <p>No pudimos encontrar el perfil para: <strong>@{username}</strong></p>
                   <p className="mt-4">Detalles del error:</p>
                   <code className="block bg-black/10 p-2 rounded-md text-left text-xs mt-2">
-                    {/* Imprimimos el error aquí */}
                     {profileError ? profileError.message : "No profile data returned."}
                   </code>
                 </EmptyDescription>
