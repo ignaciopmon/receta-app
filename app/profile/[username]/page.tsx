@@ -31,28 +31,25 @@ export default async function PublicProfilePage({
 }) {
   const supabase = await createClient()
   const { username } = params
-  // Normalizamos el parámetro por si viene URL-encoded o con un '@' al principio
-  const cleanUsername = decodeURIComponent(username).replace(/^@/, "").trim()
-  console.log("PublicProfilePage: username param:", username, "-> clean:", cleanUsername)
 
   
   // 1. Buscamos el perfil
-  const { data: profiles, error: profileError } = await supabase
+  // --- CORRECCIÓN AQUÍ ---
+  // Cambiamos .ilike("username", username).limit(1) por .eq("username", username).single()
+  // .eq() busca una coincidencia exacta (vital para nombres de usuario con '_', etc.)
+  // .single() devuelve un objeto (o null), no un array, lo que simplifica la comprobación.
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    // Usamos una comparación exacta contra el username saneado para evitar
-    // que diferencias en case, prefijos '@' o encoding provoquen no-matches.
-    .eq("username", cleanUsername)
-    .limit(1) // Pide solo el primer resultado que encuentre
+    .eq("username", username) // Busca la coincidencia exacta
+    .single() 
 
-  // 2. Comprobamos si la consulta falló O si el array 'profiles' está vacío
-  if (profileError || !profiles || profiles.length === 0) {
-    if (profileError) console.error("Error fetching profile:", profileError)
+  // 2. Comprobamos si la consulta falló O si no devolvió ningún perfil
+  if (profileError || !profile) {
     notFound()
   }
 
-  // 3. Si todo va bien, cogemos el primer (y único) perfil de la lista
-  const profile = profiles[0]
+  // 3. Si todo va bien, 'profile' ya es el objeto correcto (no un array)
   
   // 4. Buscar las recetas PÚBLICAS de ese perfil
   const { data: recipes, error: recipesError } = await supabase
