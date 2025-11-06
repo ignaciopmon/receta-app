@@ -41,13 +41,14 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 2. Si el usuario NO ESTÁ logueado
+// 2. Si el usuario NO ESTÁ logueado
   if (!user) {
-    // Si intenta acceder a cualquier página protegida (que NO sea /, /auth/*, o /share/*)
+    // Si intenta acceder a cualquier página protegida (que NO sea / o /auth/*)
     // redirigir a /auth/login
     if (
       pathname !== "/" &&
-      !pathname.startsWith("/auth") &&
+      !pathname.startsWith("/auth")
+      // La línea de /share ha sido eliminada correctamente
     ) {
       // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone()
@@ -55,6 +56,5 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
   }
-
   return supabaseResponse
 }
