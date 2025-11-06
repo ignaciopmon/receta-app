@@ -1,3 +1,5 @@
+// app/recipes/edit/[id]/page.tsx
+
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { RecipeFormHeader } from "@/components/recipe-form-header"
@@ -50,6 +52,7 @@ export default async function EditRecipePage({
             initialDifficulty={recipe.difficulty}
             initialIsFavorite={recipe.is_favorite}
             initialRating={recipe.rating}
+            initialIsPublic={recipe.is_public} // --- AÑADIR ESTA LÍNEA ---
           />
         </div>
       </main>

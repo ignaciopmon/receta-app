@@ -1,7 +1,10 @@
+// components/recipe-header.tsx
+
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { UtensilsCrossed, NotebookPen, SlidersHorizontal } from "lucide-react"
+// --- IMPORTAR 'Search' ---
+import { UtensilsCrossed, NotebookPen, SlidersHorizontal, Search } from "lucide-react"
 import Link from "next/link"
 
 export function RecipeHeader() {
@@ -14,7 +17,14 @@ export function RecipeHeader() {
         </Link>
         <div className="flex items-center gap-3">
           
-          {/* Ya no importamos ni llamamos a <RecipeImportDialog /> */}
+          {/* --- BOTÓN DE BÚSQUEDA AÑADIDO --- */}
+          <Button variant="outline" asChild size="sm">
+            <Link href="/search">
+              <Search className="mr-2 h-4 w-4" />
+              Search
+            </Link>
+          </Button>
+          {/* --------------------------------- */}
 
           <Button asChild size="sm">
             <Link href="/recipes/new">

@@ -1,3 +1,5 @@
+// components/recipe-form.tsx
+
 "use client"
 
 import type React from "react"
@@ -27,6 +29,7 @@ interface RecipeFormProps {
   initialDifficulty?: string | null
   initialIsFavorite?: boolean
   initialRating?: number | null
+  initialIsPublic?: boolean // --- AÑADIR ESTA LÍNEA ---
 }
 
 export function RecipeForm({
@@ -42,6 +45,7 @@ export function RecipeForm({
   initialDifficulty = "easy",
   initialIsFavorite = false,
   initialRating = 0,
+  initialIsPublic = false, // --- AÑADIR ESTA LÍNEA ---
 }: RecipeFormProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -49,8 +53,6 @@ export function RecipeForm({
 
   const [name, setName] = useState(initialName)
   
-  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-  // Comprobamos si initialIngredients existe Y tiene elementos.
   const [ingredients, setIngredients] = useState<string[]>(
     (initialIngredients && initialIngredients.length > 0)
       ? initialIngredients
@@ -61,7 +63,6 @@ export function RecipeForm({
       ? initialSteps
       : Array(defaultStepsCount).fill(""),
   )
-  // ---------------------------------
 
   const [link, setLink] = useState(initialLink || "")
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -71,6 +72,7 @@ export function RecipeForm({
   const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
   const [rating, setRating] = useState(initialRating || 0)
+  const [isPublic, setIsPublic] = useState(initialIsPublic) // --- AÑADIR ESTA LÍNEA ---
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -165,6 +167,7 @@ export function RecipeForm({
         difficulty,
         is_favorite: isFavorite,
         rating,
+        is_public: isPublic, // --- AÑADIR ESTA LÍNEA ---
         user_id: user.id,
       }
 
@@ -247,7 +250,7 @@ export function RecipeForm({
               <SelectContent>
                 <SelectItem value="breakfast">Breakfast</SelectItem>
                 <SelectItem value="lunch">Lunch</SelectItem>
-                <SelectItem valuea="dinner">Dinner</SelectItem>
+                <SelectItem value="dinner">Dinner</SelectItem>
                 <SelectItem value="dessert">Dessert</SelectItem>
                 <SelectItem value="snack">Snack</SelectItem>
                 <SelectItem value="beverage">Beverage</SelectItem>
@@ -278,7 +281,7 @@ export function RecipeForm({
               <SelectContent>
                 <SelectItem value="0">No Rating</SelectItem>
                 <SelectItem value="1">1 Star</SelectItem>
-                <SelectItem valueB="2">2 Stars</SelectItem>
+                <SelectItem value="2">2 Stars</SelectItem>
                 <SelectItem value="3">3 Stars</SelectItem>
                 <SelectItem value="4">4 Stars</SelectItem>
                 <SelectItem value="5">5 Stars</SelectItem>
@@ -292,6 +295,18 @@ export function RecipeForm({
               Mark as Favorite
             </Label>
           </div>
+
+          {/* --- BLOQUE NUEVO AÑADIDO --- */}
+          <div className="flex items-center space-x-3 pt-6 md:col-span-2">
+             <Switch id="isPublic" checked={isPublic} onCheckedChange={setIsPublic} />
+            <div className="flex flex-col">
+              <Label htmlFor="isPublic" className="cursor-pointer">
+                Make this recipe public
+              </Label>
+              <p className="text-xs text-muted-foreground">Anyone will be able to see this recipe on your public profile.</p>
+            </div>
+          </div>
+          {/* --- FIN DEL BLOQUE NUEVO --- */}
 
         </CardContent>
       </Card>
