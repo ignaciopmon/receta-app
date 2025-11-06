@@ -1,13 +1,13 @@
 // app/profile/[username]/page.tsx
 
-// COMENTAMOS el notFound por ahora
-// import { notFound } from "next/navigation" 
+import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { PublicRecipeCard } from "@/components/public-recipe-card"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import { User, NotebookPen, AlertTriangle } from "lucide-react" // Importar Alerta
+import { User, NotebookPen } from "lucide-react"
 
+// Esta línea es MUY IMPORTANTE, evita que Vercel guarde el error en caché.
 export const dynamic = 'force-dynamic'
 
 // Definición del tipo de Receta
@@ -31,62 +31,32 @@ export default async function PublicProfilePage({
 }) {
   const supabase = await createClient()
   const { username } = params
+
   
-  let profile = null;
-  let profileError = null;
-  
-  try {
-    // 1. Buscar el perfil por el nombre de usuario (ignorando mayúsculas)
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .ilike("username", username)
-      .limit(1) // --- ¡ESTA ES LA LÍNEA NUEVA! ---
-      .single()
+  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN IMPORTANTE! ---
 
-    if (error) throw error; 
-    if (!data) throw new Error("Profile not found in database."); 
+  // 1. Buscamos el perfil
+  //    Quitamos .single() y pedimos una lista (array) con .limit(1)
+  //    Esto corrige el error "Cannot coerce the result..."
+  const { data: profiles, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .ilike("username", username) // Busca "ignacio" o "Ignacio"
+    .limit(1)                   // Pide solo el primer resultado que encuentre
 
-    profile = data;
-
-  } catch (error: any) {
-    profileError = error;
+  // 2. Comprobamos si la consulta falló O si el array 'profiles' está vacío
+  if (profileError || !profiles || profiles.length === 0) {
+    // Si no se encuentra nada, ahora sí, 404.
+    notFound()
   }
 
+  // 3. Si todo va bien, cogemos el primer (y único) perfil de la lista
+  const profile = profiles[0]
+  
+  // --- FIN DE LA CORRECCIÓN ---
 
-  // Si hay un error de perfil O no se encontró, mostramos el error
-  if (profileError || !profile) {
-    // PÁGINA DE ERROR TEMPORAL
-    return (
-      <div className="flex min-h-screen w-full flex-col">
-        <PublicHeader />
-        <main className="flex-1 bg-muted/30">
-          <div className="container mx-auto py-8 px-4 max-w-4xl">
-            <Empty className="py-16 border-destructive bg-destructive/5">
-                <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
-                  <AlertTriangle className="h-12 w-12" />
-                </EmptyMedia>
-                <EmptyTitle className="text-2xl font-serif font-semibold text-destructive">
-                  Error al cargar el perfil
-                </EmptyTitle>
-                <EmptyDescription>
-                  <p>No pudimos encontrar el perfil para: <strong>@{username}</strong></p>
-                  <p className="mt-4">Detalles del error:</p>
-                  <code className="block bg-black/10 p-2 rounded-md text-left text-xs mt-2">
-                    {profileError ? profileError.message : "No profile data returned."}
-                  </code>
-                </EmptyDescription>
-              </Empty>
-          </div>
-        </main>
-      </div>
-    )
-    // ------------------------------------
-  }
 
-  // --- El resto del código solo se ejecuta si el perfil SE ENCONTRÓ ---
-
-  // 2. Buscar las recetas PÚBLICAS de ese perfil
+  // 4. Buscar las recetas PÚBLICAS de ese perfil
   const { data: recipes, error: recipesError } = await supabase
     .from("recipes")
     .select("*")
@@ -96,8 +66,9 @@ export default async function PublicProfilePage({
     .order("created_at", { ascending: false })
 
   if (recipesError) {
-    // Aquí sí podemos usar un notFound o un error
-    return <div>Error al cargar recetas: {recipesError.message}</div>
+    // Si fallan las recetas, también 404
+    console.error("Error fetching recipes:", recipesError)
+    notFound()
   }
 
   return (
@@ -109,6 +80,7 @@ export default async function PublicProfilePage({
             <div className="flex items-center gap-3 mb-2">
               <User className="h-10 w-10 text-muted-foreground" />
               <div>
+                {/* Usamos el nombre de usuario de la base de datos (con mayúscula) */}
                 <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">@{profile.username}</h1>
                 <p className="text-muted-foreground text-lg">
                   Public recipe collection
@@ -141,8 +113,9 @@ export default async function PublicProfilePage({
                 <EmptyMedia variant="icon"><NotebookPen className="h-12 w-12" /></EmptyMedia>
                 <EmptyTitle className="text-2xl font-serif font-semibold">
                   No public recipes yet
-                </EmptyTitle>
+                </Title>
                 <EmptyDescription>
+                  {/* Usamos el nombre de usuario de la base de datos */}
                   @{profile.username} hasn't published any recipes yet. Check back later!
                 </EmptyDescription>
               </Empty>
