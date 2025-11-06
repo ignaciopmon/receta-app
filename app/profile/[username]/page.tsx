@@ -1,17 +1,14 @@
 // app/profile/[username]/page.tsx
 
-import { notFound } from "next/navigation"
+// COMENTAMOS el notFound por ahora
+// import { notFound } from "next/navigation" 
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { PublicRecipeCard } from "@/components/public-recipe-card"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import { User, NotebookPen } from "lucide-react"
+import { User, NotebookPen, AlertTriangle } from "lucide-react" // Importar Alerta
 
-// --- ¡ESTA ES LA LÍNEA CLAVE! ---
-// Le dice a Vercel/Next.js que NUNCA guarde esta página en caché
-// y que siempre la regenere desde el servidor.
 export const dynamic = 'force-dynamic'
-// -----------------------------------
 
 // Definición del tipo de Receta
 interface Recipe {
@@ -34,18 +31,62 @@ export default async function PublicProfilePage({
 }) {
   const supabase = await createClient()
   const { username } = params
+  
+  let profile = null;
+  let profileError = null;
+  
+  // --- AÑADIMOS UN BLOQUE try...catch ---
+  try {
+    // 1. Buscar el perfil por el nombre de usuario (ignorando mayúsculas)
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .ilike("username", username)
+      .single()
 
-  // 1. Buscar el perfil por el nombre de usuario (ignorando mayúsculas)
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, username")
-    .ilike("username", username)
-    .single()
+    if (error) throw error; // Lanzamos el error si Supabase lo devuelve
+    if (!data) throw new Error("Profile not found in database."); // Lanzamos un error si no hay datos
 
-  // Si no se encuentra el perfil, mostrar un 404
-  if (profileError || !profile) {
-    notFound()
+    profile = data;
+
+  } catch (error: any) {
+    profileError = error;
   }
+  // --- FIN DEL BLOQUE try...catch ---
+
+
+  // Si hay un error de perfil O no se encontró, mostramos el error
+  if (profileError || !profile) {
+    // ESTA ES LA PÁGINA DE ERROR TEMPORAL
+    return (
+      <div className="flex min-h-screen w-full flex-col">
+        <PublicHeader />
+        <main className="flex-1 bg-muted/30">
+          <div className="container mx-auto py-8 px-4 max-w-4xl">
+            <Empty className="py-16 border-destructive bg-destructive/5">
+                <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+                  <AlertTriangle className="h-12 w-12" />
+                </EmptyMedia>
+                <EmptyTitle className="text-2xl font-serif font-semibold text-destructive">
+                  Error al cargar el perfil
+                </EmptyTitle>
+                <EmptyDescription>
+                  <p>No pudimos encontrar el perfil para: <strong>@{username}</strong></p>
+                  <p className="mt-4">Detalles del error:</p>
+                  <code className="block bg-black/10 p-2 rounded-md text-left text-xs mt-2">
+                    {/* Imprimimos el error aquí */}
+                    {profileError ? profileError.message : "No profile data returned."}
+                  </code>
+                </EmptyDescription>
+              </Empty>
+          </div>
+        </main>
+      </div>
+    )
+    // ------------------------------------
+  }
+
+  // --- El resto del código solo se ejecuta si el perfil SE ENCONTRÓ ---
 
   // 2. Buscar las recetas PÚBLICAS de ese perfil
   const { data: recipes, error: recipesError } = await supabase
@@ -57,8 +98,8 @@ export default async function PublicProfilePage({
     .order("created_at", { ascending: false })
 
   if (recipesError) {
-    console.error("Error fetching recipes:", recipesError)
-    notFound()
+    // Aquí sí podemos usar un notFound o un error
+    return <div>Error al cargar recetas: {recipesError.message}</div>
   }
 
   return (
