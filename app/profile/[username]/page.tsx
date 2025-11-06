@@ -31,17 +31,23 @@ export default async function PublicProfilePage({
 }) {
   const supabase = await createClient()
   const { username } = params
+  // Normalizamos el parámetro por si viene URL-encoded o con un '@' al principio
+  const cleanUsername = decodeURIComponent(username).replace(/^@/, "").trim()
+  console.log("PublicProfilePage: username param:", username, "-> clean:", cleanUsername)
 
   
   // 1. Buscamos el perfil
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .ilike("username", username) 
+    // Usamos una comparación exacta contra el username saneado para evitar
+    // que diferencias en case, prefijos '@' o encoding provoquen no-matches.
+    .eq("username", cleanUsername)
     .limit(1) // Pide solo el primer resultado que encuentre
 
   // 2. Comprobamos si la consulta falló O si el array 'profiles' está vacío
   if (profileError || !profiles || profiles.length === 0) {
+    if (profileError) console.error("Error fetching profile:", profileError)
     notFound()
   }
 
