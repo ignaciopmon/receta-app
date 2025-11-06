@@ -45,8 +45,3 @@ CREATE POLICY "Users can hard delete their own recipes"
 CREATE POLICY "Owners can view their own non-deleted recipes"
   ON public.recipes FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
-  
--- POLÍTICA B: CUALQUIERA (público) puede ver recetas marcadas como públicas (y no en la papelera).
-CREATE POLICY "Anyone can view public, non-deleted recipes"
-  ON public.recipes FOR SELECT
-  USING (is_public = TRUE AND deleted_at IS NULL);

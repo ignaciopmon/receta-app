@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { ExternalLink, ArrowLeft, PenSquare } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { ShareButton } from "@/components/share-button"
 import { Toaster } from "@/components/ui/toaster"
 
 export default async function RecipeDetailPage({
@@ -67,8 +66,6 @@ export default async function RecipeDetailPage({
                       <PenSquare className="h-4 w-4" />
                     </Link>
                   </Button>
-                  {/* @ts-ignore */}
-                  <ShareButton recipeId={recipe.id} isPublic={recipe.is_public} />
                 </div>
                 {/* Botones de escritorio */}
                 <div className="hidden md:flex gap-3">
@@ -78,8 +75,6 @@ export default async function RecipeDetailPage({
                       Edit
                     </Link>
                   </Button>
-                  {/* @ts-ignore */}
-                  <ShareButton recipeId={recipe.id} isPublic={recipe.is_public} />
                 </div>
                 
                 {recipe.link && (
