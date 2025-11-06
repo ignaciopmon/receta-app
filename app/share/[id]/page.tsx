@@ -8,6 +8,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { SaveRecipeButton } from "@/components/save-recipe-button"
 
+export const revalidate = 0;
+
 // Esta es una cabecera simple para la página pública
 function ShareHeader() {
   return (
