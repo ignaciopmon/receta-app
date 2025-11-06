@@ -33,29 +33,21 @@ export default async function PublicProfilePage({
   const { username } = params
 
   
-  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN IMPORTANTE! ---
-
   // 1. Buscamos el perfil
-  //    Quitamos .single() y pedimos una lista (array) con .limit(1)
-  //    Esto corrige el error "Cannot coerce the result..."
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .ilike("username", username) // Busca "ignacio" o "Ignacio"
-    .limit(1)                   // Pide solo el primer resultado que encuentre
+    .ilike("username", username) 
+    .limit(1) // Pide solo el primer resultado que encuentre
 
   // 2. Comprobamos si la consulta falló O si el array 'profiles' está vacío
   if (profileError || !profiles || profiles.length === 0) {
-    // Si no se encuentra nada, ahora sí, 404.
     notFound()
   }
 
   // 3. Si todo va bien, cogemos el primer (y único) perfil de la lista
   const profile = profiles[0]
   
-  // --- FIN DE LA CORRECCIÓN ---
-
-
   // 4. Buscar las recetas PÚBLICAS de ese perfil
   const { data: recipes, error: recipesError } = await supabase
     .from("recipes")
@@ -66,7 +58,6 @@ export default async function PublicProfilePage({
     .order("created_at", { ascending: false })
 
   if (recipesError) {
-    // Si fallan las recetas, también 404
     console.error("Error fetching recipes:", recipesError)
     notFound()
   }
@@ -80,7 +71,6 @@ export default async function PublicProfilePage({
             <div className="flex items-center gap-3 mb-2">
               <User className="h-10 w-10 text-muted-foreground" />
               <div>
-                {/* Usamos el nombre de usuario de la base de datos (con mayúscula) */}
                 <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">@{profile.username}</h1>
                 <p className="text-muted-foreground text-lg">
                   Public recipe collection
@@ -113,9 +103,12 @@ export default async function PublicProfilePage({
                 <EmptyMedia variant="icon"><NotebookPen className="h-12 w-12" /></EmptyMedia>
                 <EmptyTitle className="text-2xl font-serif font-semibold">
                   No public recipes yet
-                </Title>
+                </EmptyTitle> 
+                {/* --- ¡AQUÍ ESTABA EL ERROR! --- */}
+                {/* El error que reportaste (</Title>) ya está corregido. 
+                  La línea de arriba (<EmptyTitle>) se cierra correctamente.
+                */}
                 <EmptyDescription>
-                  {/* Usamos el nombre de usuario de la base de datos */}
                   @{profile.username} hasn't published any recipes yet. Check back later!
                 </EmptyDescription>
               </Empty>
