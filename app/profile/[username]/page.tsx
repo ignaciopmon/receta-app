@@ -30,11 +30,14 @@ export default async function PublicProfilePage({
   const { username } = params
 
   // 1. Buscar el perfil por el nombre de usuario
+  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+  // Cambiamos .eq() por .ilike() para ignorar mayúsculas/minúsculas
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username)
+    .ilike("username", username) // ANTES ERA .eq()
     .single()
+  // ---------------------------------
 
   // Si no se encuentra el perfil, mostrar un 404
   if (profileError || !profile) {
