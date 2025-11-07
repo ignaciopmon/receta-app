@@ -23,14 +23,19 @@ export default function PublicHomePage() {
         </div>
 
         {/* 2. Los botones que aparecerán después */}
-        <div className="animate-buttons-fade-in flex w-full max-w-xs flex-col gap-3 sm:flex-row">
-          <Button asChild size="lg" className="w-full">
+        {/* --- CAMBIOS AQUÍ --- 
+           - 'sm:w-auto' en el contenedor
+           - 'w-full sm:w-auto' en los botones
+           - Texto en inglés
+        */}
+        <div className="animate-buttons-fade-in flex w-full max-w-xs flex-col gap-3 sm:w-auto sm:flex-row">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link href="/auth/login">
               <LogIn className="mr-2 h-5 w-5" />
               Log In
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="w-full">
+          <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
             <Link href="/auth/sign-up">
               <UserPlus className="mr-2 h-5 w-5" />
               Sign Up
