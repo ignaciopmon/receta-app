@@ -13,8 +13,16 @@ export const metadata: Metadata = {
   title: "Cocina - Your Recipe Collection",
   description: "Save and organize your favorite recipes",
   generator: "v0.app",
-  // --- AÑADIR ESTO PARA MÓVILES ---
-  // ------------------------------
+}
+
+// In app/layout.js
+
+// Your NEW, separate generateViewport function
+export function generateViewport({ params }) {
+  return {
+    width: 'device-width',
+    initialScale: 1,
+  };
 }
 
 export default function RootLayout({
