@@ -58,7 +58,7 @@ export default async function RecipeDetailPage({
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
               
               {/* --- CAMBIO AQUÍ: gap-2 A gap-3 --- */}
-              <div className="flex gap-3 flex-shrink-0">
+              <div className="flex gap-6 flex-shrink-0">
                 {/* Botones de móvil */}
                 <div className="md:hidden flex gap-3">
                   <Button asChild variant="outline" size="icon">
@@ -86,7 +86,7 @@ export default async function RecipeDetailPage({
                     </Button>
                     <Button asChild variant="outline" className="hidden md:inline-flex">
                       <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <ExternalLink className="mr-2 h-4 w-2" />
                         View Source
                       </a>
                     </Button>
