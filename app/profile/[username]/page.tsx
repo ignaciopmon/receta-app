@@ -35,9 +35,9 @@ export default async function PublicProfilePage({
   
   // 1. Buscamos el perfil
   // --- CORRECCIÓN AQUÍ ---
-  Cambiamos .ilike("username", username).limit(1) por .eq("username", username).single()
-  .eq() busca una coincidencia exacta (vital para nombres de usuario con '_', etc.)
-  .single() devuelve un objeto (o null), no un array, lo que simplifica la comprobación.
+  // Cambiamos .ilike("username", username).limit(1) por .eq("username", username).single()
+  // .eq() busca una coincidencia exacta (vital para nombres de usuario con '_', etc.)
+  // .single() devuelve un objeto (o null), no un array, lo que simplifica la comprobación.
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
