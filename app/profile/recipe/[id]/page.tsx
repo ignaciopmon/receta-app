@@ -33,7 +33,7 @@ export default async function PublicRecipePage({
 }: {
   params: { id: string }
 }) {
-  const { id } = params
+  const { id } = await params
   const supabase = await createClient()
 
   // 1. Buscar la receta pública por su ID
