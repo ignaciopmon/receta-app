@@ -14,7 +14,6 @@ export const metadata: Metadata = {
   description: "Save and organize your favorite recipes",
   generator: "v0.app",
   // --- AÑADIR ESTO PARA MÓVILES ---
-  },
   // ------------------------------
 }
 
