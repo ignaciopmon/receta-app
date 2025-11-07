@@ -1,8 +1,11 @@
+// app/settings/page.tsx
+
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { SettingsHeader } from "@/components/settings-header"
 import { SettingsForm } from "@/components/settings-form"
 import { TrashSection } from "@/components/trash-section"
+import { AccountForm } from "@/components/account-form" // --- AÑADIR ESTA LÍNEA ---
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -14,6 +17,15 @@ export default async function SettingsPage() {
 
   // Fetch user preferences
   const { data: preferences } = await supabase.from("user_preferences").select("*").eq("user_id", data.user.id).single()
+
+  // --- AÑADIR ESTO ---
+  // Fetch user profile for username
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", data.user.id)
+    .single()
+  // --------------------
 
   // Fetch deleted recipes
   const { data: deletedRecipes } = await supabase
@@ -31,6 +43,14 @@ export default async function SettingsPage() {
           <h1 className="text-4xl font-serif font-bold mb-8 text-balance">Settings</h1>
 
           <div className="space-y-8">
+            
+            {/* --- AÑADIR ESTE COMPONENTE --- */}
+            <AccountForm
+              initialUsername={profile?.username || ''}
+              userId={data.user.id}
+            />
+            {/* ------------------------------- */}
+
             <SettingsForm
               initialTheme={preferences?.theme || "light"}
               initialIngredientsCount={preferences?.default_ingredients_count || 3}

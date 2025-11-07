@@ -1,3 +1,5 @@
+// components/settings-form.tsx
+
 "use client"
 
 import { useState } from "react"
@@ -8,8 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-// --- ICONOS ACTUALIZADOS ---
-import { DoorOpen, CheckCircle, Paintbrush, Baseline } from "lucide-react"
+// --- ICONOS ACTUALIZADOS (ELIMINADO 'DoorOpen') ---
+import { CheckCircle, Paintbrush, Baseline } from "lucide-react"
 
 type Theme = "light" | "dark" | "pastel"
 
@@ -23,7 +25,7 @@ interface SettingsFormProps {
 export function SettingsForm({ initialTheme, initialIngredientsCount, initialStepsCount, userId }: SettingsFormProps) {
   const router = useRouter()
   const supabase = createClient()
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme() // 'theme' no se usa, pero lo mantenemos por si acaso
 
   const [selectedTheme, setSelectedTheme] = useState<Theme>(initialTheme)
   const [ingredientsCount, setIngredientsCount] = useState(initialIngredientsCount)
@@ -58,17 +60,13 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
     }
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/auth/login")
-  }
+  // --- FUNCIÓN 'handleLogout' ELIMINADA ---
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            {/* --- ICONO CAMBIADO --- */}
             <Paintbrush className="h-5 w-5" />
             <CardTitle>Theme</CardTitle>
           </div>
@@ -76,6 +74,7 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
+            {/* ... (el contenido de los botones de tema no cambia) ... */}
             <button
               onClick={() => handleThemeChange("light")}
               className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
@@ -112,7 +111,6 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            {/* --- ICONO CAMBIADO --- */}
             <Baseline className="h-5 w-5" />
             <CardTitle>Default Form Fields</CardTitle>
           </div>
@@ -147,17 +145,11 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
         </CardContent>
       </Card>
 
+      {/* --- BOTÓN DE LOGOUT ELIMINADO --- */}
       <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={isSaving} className="flex-1">
-          {/* --- ICONO CAMBIADO --- */}
+        <Button onClick={handleSave} disabled={isSaving}>
           <CheckCircle className="mr-2 h-4 w-4" />
           {isSaving ? "Saving..." : "Save Settings"}
-        </Button>
-
-        <Button variant="destructive" onClick={handleLogout}>
-          {/* --- ICONO CAMBIADO --- */}
-          <DoorOpen className="mr-2 h-4 w-4" />
-          Logout
         </Button>
       </div>
     </div>
