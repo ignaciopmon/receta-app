@@ -30,7 +30,7 @@ export default async function PublicProfilePage({
   params: { username: string }
 }) {
   const supabase = await createClient()
-  const { username } = params
+  const { username } = await params
 
   
   // 1. Buscamos el perfil
