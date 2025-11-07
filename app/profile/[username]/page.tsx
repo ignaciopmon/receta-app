@@ -52,16 +52,16 @@ export default async function PublicProfilePage({
 
   // // 3. Si todo va bien, 'profile' ya es el objeto correcto (no un array)
   
-  // // 4. Buscar las recetas PÚBLICAS de ese perfil
-  const { data: recipes, error: recipesError } = await supabase
-    .from("recipes")
-    .select("*")
-    .eq("user_id", profile.id)     // Del usuario encontrado
-    .eq("is_public", true)        // Que sean públicas
-    .is("deleted_at", null)       // Que no estén borradas
-    .order("created_at", { ascending: false })
+  // // // 4. Buscar las recetas PÚBLICAS de ese perfil
+  // const { data: recipes, error: recipesError } = await supabase
+  //   .from("recipes")
+  //   .select("*")
+  //   .eq("user_id", profile.id)     // Del usuario encontrado
+  //   .eq("is_public", true)        // Que sean públicas
+  //   .is("deleted_at", null)       // Que no estén borradas
+  //   .order("created_at", { ascending: false })
 
-  return JSON.stringify({profile, recipes})
+  return JSON.stringify({profile})
 
   // if (recipesError) {
   //   console.error("Error fetching recipes:", recipesError)
