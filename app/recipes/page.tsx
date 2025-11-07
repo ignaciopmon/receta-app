@@ -9,11 +9,9 @@ import { RecipeFilters } from "@/components/recipe-filters"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { CookingPot, Search, NotebookPen } from "lucide-react"
-
-// --- IMPORTS ACTUALIZADOS ---
 import { RecipeCardSkeleton } from "@/components/recipe-card-skeleton"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-// ----------------------------
+import { WelcomeModal } from "@/components/welcome-modal" // --- 1. IMPORTAR EL MODAL ---
 
 interface Recipe {
   id: string
@@ -43,15 +41,21 @@ export default function RecipesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // --- 2. AÑADIR ESTADOS PARA EL MODAL ---
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [welcomeUsername, setWelcomeUsername] = useState("")
+  const [welcomeUserId, setWelcomeUserId] = useState("")
+  // ------------------------------------
+
   const supabase = createClient()
 
   useEffect(() => {
-    fetchRecipes()
+    fetchData() // Cambiamos el nombre para reflejar que hace más que solo 'fetchRecipes'
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("[v0] Page visible, refetching recipes")
-        fetchRecipes()
+        console.log("[v0] Page visible, refetching data")
+        fetchData()
       }
     }
 
@@ -66,7 +70,7 @@ export default function RecipesPage() {
     filterRecipes()
   }, [recipes, searchQuery, category, difficulty, showFavorites, rating])
 
-  const fetchRecipes = async () => {
+  const fetchData = async () => {
     setIsLoading(true) 
     try {
       setError(null)
@@ -86,6 +90,11 @@ export default function RecipesPage() {
         setIsLoading(false)
         return
       }
+      
+      // --- 3. LÓGICA PARA COMPROBAR EL MODAL ---
+      // (Se ejecuta en paralelo a la carga de recetas)
+      checkWelcomeModal(user.id)
+      // ---------------------------------------
 
       console.log("[v0] Fetching recipes for user:", user.id)
 
@@ -107,13 +116,47 @@ export default function RecipesPage() {
       }
       setRecipes(data || [])
     } catch (error) {
-      console.error("[v0] Error fetching recipes:", error)
+      console.error("[v0] Error fetching data:", error)
       setError(error instanceof Error ? error.message : "Failed to fetch recipes")
     } finally {
-      // Pequeño retraso para que la animación se aprecie
       setTimeout(() => setIsLoading(false), 300)
     }
   }
+
+  // --- 4. NUEVA FUNCIÓN PARA EL MODAL ---
+  const checkWelcomeModal = async (userId: string) => {
+    try {
+      const { data: prefsData, error: prefsError } = await supabase
+        .from("user_preferences")
+        .select("has_seen_welcome_modal")
+        .eq("user_id", userId)
+        .single()
+
+      if (prefsError) throw prefsError
+      
+      // Si el flag es FALSO, mostramos el modal
+      if (prefsData && !prefsData.has_seen_welcome_modal) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", userId)
+          .single()
+        
+        if (profileError) throw profileError
+        
+        if (profileData) {
+          setWelcomeUsername(profileData.username)
+          setWelcomeUserId(userId)
+          setShowWelcomeModal(true) // ¡Activamos el modal!
+        }
+      }
+    } catch (welcomeError) {
+      console.error("Error checking for welcome modal:", welcomeError)
+      // No hacemos nada si esto falla, simplemente no se muestra el modal.
+    }
+  }
+  // ------------------------------------
+
 
   const filterRecipes = () => {
     let filtered = [...recipes]
@@ -152,19 +195,16 @@ export default function RecipesPage() {
     setFilteredRecipes(filtered)
   }
 
-  // --- ESTADO DE CARGA MEJORADO ---
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <RecipeHeader />
         <main className="flex-1 bg-muted/30">
           <div className="container mx-auto py-8 px-4">
-            {/* Cabecera fantasma */}
             <div className="mb-8">
               <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
               <p className="text-muted-foreground text-lg">Loading your recipes...</p>
             </div>
-            {/* Grid de Esqueletos */}
             <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <RecipeCardSkeleton />
               <RecipeCardSkeleton />
@@ -175,7 +215,6 @@ export default function RecipesPage() {
       </div>
     )
   }
-  // ---------------------------------
 
   if (error) {
     return (
@@ -185,7 +224,7 @@ export default function RecipesPage() {
           <div className="text-center p-4">
             <h2 className="text-xl font-serif font-semibold mb-2">Error</h2>
             <p className="text-muted-foreground">{error}</p>
-            <Button onClick={() => fetchRecipes()} className="mt-4">
+            <Button onClick={() => fetchData()} className="mt-4">
               Try Again
             </Button>
           </div>
@@ -225,7 +264,6 @@ export default function RecipesPage() {
           )}
 
           {recipes.length === 0 ? (
-            // --- ESTADO VACÍO (PRIMER USO) ---
             <Empty className="py-16">
               <EmptyMedia variant="icon">
                 <CookingPot className="h-12 w-12" />
@@ -246,7 +284,6 @@ export default function RecipesPage() {
             </Empty>
 
           ) : filteredRecipes.length > 0 ? (
-            // --- LISTA DE RECETAS ---
             <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
@@ -257,7 +294,7 @@ export default function RecipesPage() {
                   steps={recipe.steps}
                   imageUrl={recipe.image_url}
                   link={recipe.link}
-                  onUpdate={fetchRecipes}
+                  onUpdate={fetchData}
                   category={recipe.category}
                   difficulty={recipe.difficulty}
                   isFavorite={recipe.is_favorite}
@@ -267,7 +304,6 @@ export default function RecipesPage() {
             </div>
 
           ) : (
-            // --- ESTADO VACÍO (SIN RESULTADOS) ---
             <Empty className="py-16">
               <EmptyMedia variant="icon">
                 <Search className="h-12 w-12" />
@@ -295,6 +331,16 @@ export default function RecipesPage() {
           )}
         </div>
       </main>
+
+      {/* --- 5. RENDERIZAR EL MODAL SI showWelcomeModal ES TRUE --- */}
+      {showWelcomeModal && (
+        <WelcomeModal
+          userId={welcomeUserId}
+          username={welcomeUsername}
+          onClose={() => setShowWelcomeModal(false)}
+        />
+      )}
+      {/* ---------------------------------------------------- */}
     </div>
   )
 }
