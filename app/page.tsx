@@ -1,48 +1,44 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { SettingsHeader } from "@/components/settings-header"
-import { SettingsForm } from "@/components/settings-form"
-import { TrashSection } from "@/components/trash-section"
+// app/page.tsx
 
-export default async function SettingsPage() {
-  const supabase = await createClient()
+import { Button } from "@/components/ui/button"
+import { LogIn, UserPlus, UtensilsCrossed } from "lucide-react"
+import Link from "next/link"
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
-
-  // Fetch user preferences
-  const { data: preferences } = await supabase.from("user_preferences").select("*").eq("user_id", data.user.id).single()
-
-  // Fetch deleted recipes
-  const { data: deletedRecipes } = await supabase
-    .from("recipes")
-    .select("*")
-    .eq("user_id", data.user.id)
-    .not("deleted_at", "is", null)
-    .order("deleted_at", { ascending: false })
-
+// Esta es tu nueva página de inicio pública.
+// No necesita "use client" y usará animaciones CSS.
+// El middleware se encargará de redirigir a los usuarios
+// que SÍ estén logueados a /recipes.
+export default function PublicHomePage() {
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <SettingsHeader />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
-          {/* --- TÍTULO RESPONSIVO --- */}
-          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-8 text-balance">Settings</h1>
-
-          <div className="space-y-8">
-            <SettingsForm
-              initialTheme={preferences?.theme || "light"}
-              initialIngredientsCount={preferences?.default_ingredients_count || 3}
-              initialStepsCount={preferences?.default_steps_count || 3}
-              userId={data.user.id}
-            />
-
-            <TrashSection deletedRecipes={deletedRecipes || []} />
-          </div>
+    <main className="flex min-h-svh w-full flex-col items-center justify-center overflow-hidden bg-background p-4">
+      {/* Contenedor principal para centrar el contenido */}
+      <div className="relative flex flex-col items-center justify-center space-y-8">
+        
+        {/* 1. El logo y título que se animarán hacia arriba */}
+        <div className="animate-logo-intro-and-move flex flex-col items-center gap-4">
+          <UtensilsCrossed className="h-20 w-20 text-primary md:h-24 md:w-24" />
+          <h1 className="text-6xl font-serif font-bold text-center md:text-7xl">
+            Cocina
+          </h1>
         </div>
-      </main>
-    </div>
+
+        {/* 2. Los botones que aparecerán después */}
+        <div className="animate-buttons-fade-in flex w-full max-w-xs flex-col gap-3 sm:flex-row">
+          <Button asChild size="lg" className="w-full">
+            <Link href="/auth/login">
+              <LogIn className="mr-2 h-5 w-5" />
+              Log In
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="w-full">
+            <Link href="/auth/sign-up">
+              <UserPlus className="mr-2 h-5 w-5" />
+              Sign Up
+            </Link>
+          </Button>
+        </div>
+
+      </div>
+    </main>
   )
 }

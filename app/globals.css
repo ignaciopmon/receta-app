@@ -156,3 +156,53 @@
     /* ------------------------- */
   }
 }
+
+/* --- Animaciones de la Landing Page --- */
+
+/* Keyframes para el Logo y Título:
+  1. Aparece (0% a 20%)
+  2. Se mantiene en el centro (20% a 60%)
+  3. Se mueve hacia arriba (60% a 100%)
+*/
+@keyframes logo-intro-and-move {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  20%, 60% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-90px); /* Sube 90px */
+  }
+}
+
+/* Keyframes para los Botones:
+  1. Permanecen invisibles mientras el logo está en el centro (0% a 70%)
+  2. Aparecen suavemente (70% a 100%)
+*/
+@keyframes buttons-fade-in {
+  0%, 70% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Clases de utilidad para aplicar las animaciones */
+.animate-logo-intro-and-move {
+  /* Duración total de 2.5s, se queda en el estado final */
+  animation: logo-intro-and-move 2.5s ease-in-out forwards;
+}
+
+.animate-buttons-fade-in {
+  /* Misma duración para estar sincronizado, se queda en el estado final */
+  animation: buttons-fade-in 2.5s ease-in-out forwards;
+  position: relative;
+  z-index: 10;
+}
