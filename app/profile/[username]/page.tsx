@@ -61,7 +61,7 @@ export default async function PublicProfilePage({
   //   .is("deleted_at", null)       // Que no estén borradas
   //   .order("created_at", { ascending: false })
 
-  return JSON.stringify({profile})
+  return JSON.stringify({profile, profileError, username})
 
   // if (recipesError) {
   //   console.error("Error fetching recipes:", recipesError)
