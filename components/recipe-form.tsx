@@ -29,7 +29,6 @@ interface RecipeFormProps {
   initialDifficulty?: string | null
   initialIsFavorite?: boolean
   initialRating?: number | null
-  initialIsPublic?: boolean // --- AÑADIR ESTA LÍNEA ---
 }
 
 export function RecipeForm({
@@ -45,7 +44,6 @@ export function RecipeForm({
   initialDifficulty = "easy",
   initialIsFavorite = false,
   initialRating = 0,
-  initialIsPublic = false, // --- AÑADIR ESTA LÍNEA ---
 }: RecipeFormProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -72,7 +70,6 @@ export function RecipeForm({
   const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
   const [rating, setRating] = useState(initialRating || 0)
-  const [isPublic, setIsPublic] = useState(initialIsPublic) // --- AÑADIR ESTA LÍNEA ---
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -167,7 +164,6 @@ export function RecipeForm({
         difficulty,
         is_favorite: isFavorite,
         rating,
-        is_public: isPublic, // --- AÑADIR ESTA LÍNEA ---
         user_id: user.id,
       }
 
@@ -295,18 +291,6 @@ export function RecipeForm({
               Mark as Favorite
             </Label>
           </div>
-
-          {/* --- BLOQUE NUEVO AÑADIDO --- */}
-          <div className="flex items-center space-x-3 pt-6 md:col-span-2">
-             <Switch id="isPublic" checked={isPublic} onCheckedChange={setIsPublic} />
-            <div className="flex flex-col">
-              <Label htmlFor="isPublic" className="cursor-pointer">
-                Make this recipe public
-              </Label>
-              <p className="text-xs text-muted-foreground">Anyone will be able to see this recipe on your public profile.</p>
-            </div>
-          </div>
-          {/* --- FIN DEL BLOQUE NUEVO --- */}
 
         </CardContent>
       </Card>
