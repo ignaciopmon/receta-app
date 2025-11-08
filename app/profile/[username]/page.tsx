@@ -27,20 +27,15 @@ interface Recipe {
 export default async function PublicProfilePage({
   params,
 }: {
-params: { username: string }
+  params: { username: string }
 }) {
   const supabase = await createClient()
-  // --- CAMBIO AQUÍ ---
-  // Decodificamos el 'username' que viene de la URL (ej. "user%40gmail.com" -> "user@gmail.com")
+
+  // Decodificamos el username de la URL por si tiene caracteres especiales
   const username = decodeURIComponent(params.username)
-  // --- FIN DEL CAMBIO ---
 
   
   // 1. Buscamos el perfil
-  // --- CORRECCIÓN AQUÍ ---
-  // Cambiamos .ilike("username", username).limit(1) por .eq("username", username).single()
-  // .eq() busca una coincidencia exacta (vital para nombres de usuario con '_', etc.)
-  // .single() devuelve un objeto (o null), no un array, lo que simplifica la comprobación.
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
@@ -48,14 +43,12 @@ params: { username: string }
     .single() 
 
 
-  // // 2. Comprobamos si la consulta falló O si no devolvió ningún perfil
+  // 2. Comprobamos si la consulta falló O si no devolvió ningún perfil
   if (profileError || !profile) {
     notFound()
   }
-
-  // // 3. Si todo va bien, 'profile' ya es el objeto correcto (no un array)
   
-  // // 4. Buscar las recetas PÚBLICAS de ese perfil
+  // 3. Buscar las recetas PÚBLICAS de ese perfil
   const { data: recipes, error: recipesError } = await supabase
     .from("recipes")
     .select("*")
@@ -112,10 +105,6 @@ params: { username: string }
                 <EmptyTitle className="text-2xl font-serif font-semibold">
                   No public recipes yet
                 </EmptyTitle> 
-                {/* --- ¡AQUÍ ESTABA EL ERROR! --- */}
-                {/* El error que reportaste (</Title>) ya está corregido. 
-                  La línea de arriba (<EmptyTitle>) se cierra correctamente.
-                */}
                 <EmptyDescription>
                   @{profile.username} hasn't published any recipes yet. Check back later!
                 </EmptyDescription>
