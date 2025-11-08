@@ -62,13 +62,12 @@ export default async function PublicRecipePage({
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <PublicHeader />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
+<div className="container mx-auto py-8 px-4 max-w-4xl">
           {/* Botón para volver al perfil público del autor */}
           <Button asChild variant="ghost" className="mb-6 -ml-2">
-            <Link href={`/profile/${profile.username}`}>
+            {/* --- CAMBIO AQUÍ --- */}
+            <Link href={`/profile/${encodeURIComponent(profile.username)}`}>
+            {/* --- FIN DEL CAMBIO --- */}
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to @{profile.username}'s profile
             </Link>
@@ -103,11 +102,13 @@ export default async function PublicRecipePage({
               </div>
             </div>
 
-            {/* Información de Autor, Categoría y Dificultad */}
+{/* Información de Autor, Categoría y Dificultad */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
               <div className="flex items-center gap-1.5 text-sm">
                 <User className="h-4 w-4" />
-                <span>Recipe by <Link href={`/profile/${profile.username}`} className="font-medium text-foreground hover:underline">@{profile.username}</Link></span>
+                {/* --- CAMBIO AQUÍ --- */}
+                <span>Recipe by <Link href={`/profile/${encodeURIComponent(profile.username)}`} className="font-medium text-foreground hover:underline">@{profile.username}</Link></span>
+                {/* --- FIN DEL CAMBIO --- */}
               </div>
               {recipe.category && <Badge variant="outline">{recipe.category}</Badge>}
               {recipe.difficulty && <Badge variant="secondary">{recipe.difficulty}</Badge>}

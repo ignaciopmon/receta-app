@@ -27,10 +27,13 @@ interface Recipe {
 export default async function PublicProfilePage({
   params,
 }: {
-  params: { username: string }
+params: { username: string }
 }) {
   const supabase = await createClient()
-  const { username } = await params
+  // --- CAMBIO AQUÍ ---
+  // Decodificamos el 'username' que viene de la URL (ej. "user%40gmail.com" -> "user@gmail.com")
+  const username = decodeURIComponent(params.username)
+  // --- FIN DEL CAMBIO ---
 
   
   // 1. Buscamos el perfil

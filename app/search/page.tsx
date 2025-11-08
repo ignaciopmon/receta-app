@@ -97,12 +97,15 @@ export default function SearchPage() {
               </Empty>
             )}
 
-            {!isLoading && results.length > 0 && (
+{!isLoading && results.length > 0 && (
               <div className="divide-y rounded-lg border bg-card">
                 {results.map((profile) => (
                   <Link
                     key={profile.username}
-                    href={`/profile/${profile.username}`}
+                    // --- CAMBIO AQUÍ ---
+                    // Codificamos el username para que caracteres como '@' no rompan la URL
+                    href={`/profile/${encodeURIComponent(profile.username)}`}
+                    // --- FIN DEL CAMBIO ---
                     className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
