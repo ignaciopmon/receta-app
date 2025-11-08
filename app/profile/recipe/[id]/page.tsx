@@ -10,12 +10,10 @@ import { ExternalLink, ArrowLeft, User } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
-// Interfaz para el perfil (simplificada)
 interface Profile {
   username: string
 }
 
-// Interfaz para la receta (simplificada)
 interface Recipe {
   id: string
   user_id: string
@@ -31,17 +29,21 @@ interface Recipe {
 export default async function PublicRecipePage({
   params,
 }: {
-  params: { id: string }
+  // --- CAMBIO AQUÍ ---
+  params: Promise<{ id: string }>
+  // --- FIN DEL CAMBIO ---
 }) {
+  // --- CAMBIO AQUÍ ---
+  // Esperamos (await) a que se resuelvan los params
   const { id } = await params
+  // --- FIN DEL CAMBIO ---
   const supabase = await createClient()
 
-  // 1. Buscar la receta pública por su ID
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
     .select("id, user_id, name, ingredients, steps, image_url, link, category, difficulty")
     .eq("id", id)
-    .eq("is_public", true) // Asegurarse de que sea pública
+    .eq("is_public", true)
     .is("deleted_at", null)
     .single()
 
@@ -49,7 +51,6 @@ export default async function PublicRecipePage({
     notFound()
   }
 
-  // 2. Buscar el perfil del autor de la receta
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("username")
@@ -57,7 +58,6 @@ export default async function PublicRecipePage({
     .single()
 
   if (profileError || !profile) {
-    // Esto no debería pasar si la receta existe, pero es una buena práctica
     notFound()
   }
 
@@ -66,9 +66,8 @@ export default async function PublicRecipePage({
       <PublicHeader />
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto py-8 px-4 max-w-4xl">
-          {/* Botón para volver al perfil público del autor */}
           <Button asChild variant="ghost" className="mb-6 -ml-2">
-            <Link href={`/profile/${profile.username}`}>
+            <Link href={`/profile/${encodeURIComponent(profile.username)}`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to @{profile.username}'s profile
             </Link>
@@ -103,11 +102,10 @@ export default async function PublicRecipePage({
               </div>
             </div>
 
-            {/* Información de Autor, Categoría y Dificultad */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
               <div className="flex items-center gap-1.5 text-sm">
                 <User className="h-4 w-4" />
-                <span>Recipe by <Link href={`/profile/${profile.username}`} className="font-medium text-foreground hover:underline">@{profile.username}</Link></span>
+                <span>Recipe by <Link href={`/profile/${encodeURIComponent(profile.username)}`} className="font-medium text-foreground hover:underline">@{profile.username}</Link></span>
               </div>
               {recipe.category && <Badge variant="outline">{recipe.category}</Badge>}
               {recipe.difficulty && <Badge variant="secondary">{recipe.difficulty}</Badge>}

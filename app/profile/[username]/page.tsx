@@ -7,10 +7,8 @@ import { PublicRecipeCard } from "@/components/public-recipe-card"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { User, NotebookPen } from "lucide-react"
 
-// Esta línea es MUY IMPORTANTE, evita que Vercel guarde el error en caché.
 export const dynamic = 'force-dynamic'
 
-// Definición del tipo de Receta
 interface Recipe {
   id: string;
   name: string;
@@ -27,36 +25,37 @@ interface Recipe {
 export default async function PublicProfilePage({
   params,
 }: {
-  params: { username: string }
+  // --- CAMBIO AQUÍ ---
+  // Los params son una Promesa que debe ser esperada
+  params: Promise<{ username: string }>
+  // --- FIN DEL CAMBIO ---
 }) {
   const supabase = await createClient()
 
-  // Decodificamos el username de la URL por si tiene caracteres especiales
-  const username = decodeURIComponent(params.username)
-
+  // --- CAMBIO AQUÍ ---
+  // Esperamos (await) a que se resuelvan los params
+  const { username: encodedUsername } = await params
+  // Decodificamos el username
+  const username = decodeURIComponent(encodedUsername)
+  // --- FIN DEL CAMBIO ---
   
-  // 1. Buscamos el perfil
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username) // Busca la coincidencia exacta
+    .eq("username", username)
     .single() 
 
-
-  // 2. Comprobamos si la consulta falló O si no devolvió ningún perfil
   if (profileError || !profile) {
     notFound()
   }
   
-  // 3. Buscar las recetas PÚBLICAS de ese perfil
   const { data: recipes, error: recipesError } = await supabase
     .from("recipes")
     .select("*")
-    .eq("user_id", profile.id)     // Del usuario encontrado
-    .eq("is_public", true)        // Que sean públicas
-    .is("deleted_at", null)       // Que no estén borradas
+    .eq("user_id", profile.id)
+    .eq("is_public", true)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
-
 
   if (recipesError) {
     console.error("Error fetching recipes:", recipesError)
