@@ -206,3 +206,40 @@
   position: relative;
   z-index: 10;
 }
+
+/* --- CURSORES PERSONALIZADOS (AÑADIDO AL FINAL) --- */
+
+/* 1. Cursor normal (flecha) para toda la página */
+html, body {
+  /* Usa el archivo .cur como cursor.
+    ¡Asegúrate de que el archivo se llame 'cursor.cur' y esté en la carpeta /public!
+    'auto' es el cursor de reserva si el archivo no carga.
+  */
+  cursor: url('/cursor.cur'), auto;
+}
+
+/* 2. Cursor de puntero (mano) para elementos clicables */
+a, button, [role="button"], 
+[data-slot="button"], 
+[data-slot="tabs-trigger"],
+[data-slot="select-trigger"],
+.cursor-pointer {
+  /*
+    Usa el archivo .cur como puntero.
+    ¡Asegúrate de que el archivo se llame 'pointer.cur' y esté en la carpeta /public!
+    'pointer' es el cursor de reserva.
+  */
+  cursor: url('/pointer.cur'), pointer;
+}
+
+/* 3. (Opcional) Forzar el cursor de texto al escribir */
+input[type="text"], 
+input[type="email"], 
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="search"],
+textarea {
+  cursor: text;
+}
+/* --- FIN DE CURSORES PERSONALIZADOS --- */
