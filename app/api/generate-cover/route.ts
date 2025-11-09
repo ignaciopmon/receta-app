@@ -3,7 +3,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenAI } from "@google/genai"
-import { upload } from "@vercel/blob/server"
+// --- LA CORRECCIÓN ESTÁ AQUÍ ---
+import { upload } from "@vercel/blob" // No es @vercel/blob/server
 
 // Inicializa el cliente de Google AI
 // Asegúrate de tener GOOGLE_API_KEY en tus variables de entorno

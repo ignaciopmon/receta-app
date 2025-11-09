@@ -7,12 +7,12 @@ import { RecipeCard } from "@/components/recipe-card"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft, CookingPot, Globe, Lock, Wand2, Loader2 } from "lucide-react"
+import { ArrowLeft, CookingPot, Globe, Lock } from "lucide-react"
+// --- 1. IMPORTAR EL NUEVO COMPONENTE ---
+import { CookbookActions } from "@/components/CookbookActions"
+import { Toaster } from "@/components/ui/toaster"
 
 export const dynamic = 'force-dynamic'
-
-// TODO: Crear este componente cliente para manejar los botones
-// import { CookbookActions } from "@/components/CookbookActions" 
 
 export default async function CookbookDetailPage({
   params,
@@ -68,33 +68,29 @@ export default async function CookbookDetailPage({
             </Link>
           </Button>
 
-          <div className="mb-8 p-6 rounded-lg bg-card border">
-            {/* Aquí irían las acciones */}
-            {/* <CookbookActions cookbook={cookbook} /> */}
-            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">
-              {cookbook.name}
-            </h1>
-            <p className="text-muted-foreground text-lg mb-4">
-              {cookbook.description || "No description provided."}
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-               {cookbook.is_public ? (
+          <div className="mb-8 p-6 rounded-lg bg-card border space-y-6">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">
+                {cookbook.name}
+              </h1>
+              <p className="text-muted-foreground text-lg mb-4">
+                {cookbook.description || "No description provided."}
+              </p>
+              {cookbook.is_public ? (
                 <div className="flex items-center gap-1.5 text-sm text-blue-500">
                   <Globe className="h-4 w-4" />
-                  <span>Public</span>
+                  <span>Public - Anyone with the link can view it.</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Lock className="h-4 w-4" />
-                  <span>Private</span>
+                  <span>Private - Only visible to you.</span>
                 </div>
               )}
-              {/* TODO: Botón para generar portada */}
-              <Button variant="outline" size="sm" disabled>
-                 <Wand2 className="mr-2 h-4 w-4" />
-                 Generate AI Cover
-              </Button>
             </div>
+            
+            {/* --- 2. AÑADIR EL COMPONENTE DE ACCIONES --- */}
+            <CookbookActions cookbook={cookbook} />
           </div>
           
           {recipes.length === 0 ? (
@@ -129,6 +125,8 @@ export default async function CookbookDetailPage({
           )}
         </div>
       </main>
+      {/* --- 3. AÑADIR EL TOASTER PARA NOTIFICACIONES --- */}
+      <Toaster />
     </div>
   )
 }
