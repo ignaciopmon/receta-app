@@ -195,22 +195,16 @@
   z-index: 10;
 }
 
-/* --- CURSORES PERSONALIZADOS (ACTUALIZADO) --- */
+/* --- CURSORES PERSONALIZADOS (VERSIÓN CORREGIDA) --- */
 
 /* 1. Cursor normal (flecha) para toda la página */
 html, body {
-  /*
-    ¡IMPORTANTE! Si el cursor es muy grande,
-    es porque el archivo 'cursor.cur' es grande.
-    La mejor solución es usar un archivo .cur o .png
-    que tenga un tamaño de 32x32 píxeles.
-  */
+  /* Usando el archivo .cur que subiste */
   cursor: url('/cursor.png'), auto;
 }
 
-/* 2. Cursor de puntero (mano) para elementos clicables
-   (LISTA DE SELECTORES AMPLIADA para mayor consistencia)
-*/
+/* 2. Cursor de puntero (mano) para elementos clicables */
+/* Esta lista es ahora mucho más completa */
 a,
 button,
 label,
@@ -223,24 +217,21 @@ label,
 [data-slot="button"],
 [data-slot="tabs-trigger"],
 [data-slot="select-trigger"],
+[data-slot="select-item"],
 [data-slot="collapsible-trigger"],
-[data-slot="accordion-trigger"] {
-  /*
-    ¡IMPORTANTE! Igual que arriba,
-    necesitarás un archivo 'pointer.cur'
-    que tenga un tamaño de 32x32 píxeles.
-  */
+[data-slot="accordion-trigger"],
+[data-slot="dropdown-menu-item"],
+[data-slot="context-menu-item"],
+[data-slot="toggle-group-item"],
+[data-slot="toggle"] {
+  /* Usando el archivo .cur que subiste */
   cursor: url('/pointer.png'), pointer;
 }
 
-/* 3. Forzar el cursor de texto al escribir */
-input[type="text"], 
-input[type="email"], 
-input[type="password"],
-input[type="number"],
-input[type="url"],
-input[type="search"],
-textarea {
+/* 3. Forzar el cursor de texto al escribir (Esto soluciona tu problema al escribir) */
+input,
+textarea,
+[role="textbox"] {
   cursor: text;
 }
 /* --- FIN DE CURSORES PERSONALIZADOS --- */
