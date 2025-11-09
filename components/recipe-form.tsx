@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, X, Loader2, CookingPot, Star } from "lucide-react"
+import { Plus, X, Loader2, CookingPot, Star } from "lucide-react" // Clock, Users
 import { upload } from "@vercel/blob/client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -29,6 +29,11 @@ interface RecipeFormProps {
   initialDifficulty?: string | null
   initialIsFavorite?: boolean
   initialRating?: number | null
+  // --- NUEVOS PROPS AÑADIDOS ---
+  initialPrepTime?: number | null
+  initialCookTime?: number | null
+  initialServings?: number | null
+  // ---------------------------
 }
 
 export function RecipeForm({
@@ -44,6 +49,10 @@ export function RecipeForm({
   initialDifficulty = "easy",
   initialIsFavorite = false,
   initialRating = 0,
+  // --- VALORES INICIALES PARA LOS NUEVOS PROPS ---
+  initialPrepTime = null,
+  initialCookTime = null,
+  initialServings = null,
 }: RecipeFormProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -70,6 +79,13 @@ export function RecipeForm({
   const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
   const [rating, setRating] = useState(initialRating || 0)
+
+  // --- NUEVOS ESTADOS AÑADIDOS ---
+  // Usamos string para los inputs, se convertirán a número al guardar
+  const [prepTime, setPrepTime] = useState(initialPrepTime?.toString() || "")
+  const [cookTime, setCookTime] = useState(initialCookTime?.toString() || "")
+  const [servings, setServings] = useState(initialServings?.toString() || "")
+  // ------------------------------
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -164,6 +180,12 @@ export function RecipeForm({
         difficulty,
         is_favorite: isFavorite,
         rating,
+        // --- CAMPOS NUEVOS AÑADIDOS AL GUARDAR ---
+        // Convierte el string del input a número, o a null si está vacío
+        prep_time: prepTime ? parseInt(prepTime, 10) : null,
+        cook_time: cookTime ? parseInt(cookTime, 10) : null,
+        servings: servings ? parseInt(servings, 10) : null,
+        // ------------------------------------
         user_id: user.id,
       }
 
@@ -267,6 +289,45 @@ export function RecipeForm({
               </SelectContent>
             </Select>
           </div>
+          
+          {/* --- BLOQUE NUEVO AÑADIDO --- */}
+          <div className="grid grid-cols-2 gap-4 md:col-span-2">
+            <div className="space-y-2">
+              <Label htmlFor="prepTime">Prep Time (mins)</Label>
+              <Input
+                id="prepTime"
+                type="number"
+                placeholder="e.g., 15"
+                min="0"
+                value={prepTime}
+                onChange={(e) => setPrepTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cookTime">Cook Time (mins)</Label>
+              <Input
+                id="cookTime"
+                type="number"
+                placeholder="e.g., 30"
+                min="0"
+                value={cookTime}
+                onChange={(e) => setCookTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="servings">Servings</Label>
+            <Input
+              id="servings"
+              type="number"
+              placeholder="e.g., 4"
+              min="1"
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
+            />
+          </div>
+          {/* --- FIN DEL BLOQUE --- */}
           
           <div className="space-y-2">
             <Label htmlFor="rating">Rating</Label>

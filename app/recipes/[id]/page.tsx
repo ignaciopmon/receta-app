@@ -1,15 +1,45 @@
+// app/recipes/[id]/page.tsx
+
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft } from "lucide-react" // Se quitan iconos que ya no se usan aquí
+// --- IMPORTAMOS LOS ICONOS NUEVOS ---
+import { ArrowLeft, Clock, Users, Star } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Toaster } from "@/components/ui/toaster"
-// --- 1. Importar el nuevo componente de acciones ---
 import { RecipeActions } from "@/components/recipe-actions"
+import { cn } from "@/lib/utils" // Importamos cn
+
+// --- Componente de Rating (movido aquí para uso local) ---
+function StarRating({ rating }: { rating: number | null }) {
+  if (rating === null || rating === 0) {
+    return (
+      <div className="flex items-center gap-0.5">
+        <Star className="h-4 w-4 text-muted-foreground/50" />
+        <span>No Rating</span>
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-center gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            "h-4 w-4",
+            i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50"
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+// ---------------------------------------------------
+
 
 export default async function RecipeDetailPage({
   params,
@@ -24,10 +54,9 @@ export default async function RecipeDetailPage({
     redirect("/auth/login")
   }
 
-  // Fetch the specific recipe
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
-    .select("*") // Esto ya incluye 'is_public', 'link', etc.
+    .select("*") 
     .eq("id", id)
     .eq("user_id", userData.user.id)
     .is("deleted_at", null)
@@ -36,6 +65,10 @@ export default async function RecipeDetailPage({
   if (recipeError || !recipe) {
     notFound()
   }
+
+  // --- Lógica para el tiempo total ---
+  const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
+  // ----------------------------------
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -49,7 +82,6 @@ export default async function RecipeDetailPage({
             </Link>
           </Button>
 
-          {/* --- ESTE ES EL CONTENIDO DE LA RECETA QUE HABÍAMOS QUITADO --- */}
           <div className="space-y-6">
             {recipe.image_url && (
               <div className="relative h-64 md:h-96 w-full overflow-hidden rounded-lg">
@@ -60,7 +92,6 @@ export default async function RecipeDetailPage({
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
               
-              {/* --- 2. Reemplazar el div de botones por el nuevo componente --- */}
               <RecipeActions
                 recipeId={recipe.id}
                 initialIsPublic={recipe.is_public}
@@ -68,6 +99,36 @@ export default async function RecipeDetailPage({
               />
               
             </div>
+
+            {/* --- BLOQUE DE METADATOS NUEVO --- */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground">
+              {recipe.category && <Badge variant="outline">{recipe.category}</Badge>}
+              {recipe.difficulty && <Badge variant="secondary">{recipe.difficulty}</Badge>}
+              
+              {totalTime > 0 && (
+                <div className="flex items-center gap-1.5 text-sm">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    {recipe.prep_time && `Prep: ${recipe.prep_time}m`}
+                    {recipe.prep_time && recipe.cook_time && " | "}
+                    {recipe.cook_time && `Cook: ${recipe.cook_time}m`}
+                    {totalTime > 0 && ` (Total: ${totalTime}m)`}
+                  </span>
+                </div>
+              )}
+              
+              {recipe.servings && (
+                <div className="flex items-center gap-1.5 text-sm">
+                  <Users className="h-4 w-4" />
+                  <span>{recipe.servings} servings</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 text-sm">
+                <StarRating rating={recipe.rating} />
+              </div>
+            </div>
+            {/* --- FIN DEL BLOQUE --- */}
 
             <Card>
               <CardHeader>
@@ -105,8 +166,6 @@ export default async function RecipeDetailPage({
               </CardContent>
             </Card>
           </div>
-          {/* --- FIN DEL CONTENIDO DE LA RECETA --- */}
-          
         </div>
       </main>
       <Toaster />
