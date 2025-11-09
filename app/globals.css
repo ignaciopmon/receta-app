@@ -195,16 +195,14 @@
   z-index: 10;
 }
 
-/* --- CURSORES PERSONALIZADOS (VERSIÓN CORREGIDA) --- */
+/* --- CURSORES PERSONALIZADOS (VERSIÓN FINAL) --- */
 
 /* 1. Cursor normal (flecha) para toda la página */
 html, body {
-  /* Usando el archivo .cur que subiste */
   cursor: url('/cursor.png'), auto;
 }
 
 /* 2. Cursor de puntero (mano) para elementos clicables */
-/* Esta lista es ahora mucho más completa */
 a,
 button,
 label,
@@ -224,14 +222,26 @@ label,
 [data-slot="context-menu-item"],
 [data-slot="toggle-group-item"],
 [data-slot="toggle"] {
-  /* Usando el archivo .cur que subiste */
   cursor: url('/pointer.png'), pointer;
 }
 
-/* 3. Forzar el cursor de texto al escribir (Esto soluciona tu problema al escribir) */
+/* 3. Forzar el cursor de texto al escribir */
 input,
 textarea,
 [role="textbox"] {
   cursor: text;
 }
+
+/* 4. (NUEVO) Ocultar los botones de flechas en los inputs de número */
+/* Ocultar para Chrome, Safari, Edge */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Ocultar para Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* --- FIN DE CURSORES PERSONALIZADOS --- */
