@@ -1,3 +1,5 @@
+// components/recipe-actions.tsx
+
 "use client"
 
 import { useState } from "react"
@@ -7,6 +9,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { PenSquare, ExternalLink, Share2, Globe, XCircle, Loader2 } from "lucide-react"
+// --- 1. IMPORTAR EL NUEVO COMPONENTE ---
+import { AddRecipeToCookbook } from "@/components/AddRecipeToCookbook"
 
 interface RecipeActionsProps {
   recipeId: string
@@ -22,24 +26,13 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
   const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Esta es la URL pública directa a la receta
   const publicUrl = `${window.location.origin}/profile/recipe/${recipeId}`
 
-  /**
-   * Lógica para el botón de COMPARTIR
-   * 1. Hace la receta pública en la DB
-   * 2. Copia la URL al portapapeles
-   * 3. Muestra un toast y actualiza el estado
-   */
   const handleShare = async () => {
     setIsLoading(true)
     
-    // 1. Hacer pública (si no lo es ya)
     if (!isPublic) {
-      // --- CORRECCIÓN AQUÍ ---
-      // Se eliminó el '_' extra después de { error }
       const { error } = await supabase
-      // --- FIN DE LA CORRECCIÓN ---
         .from("recipes")
         .update({ is_public: true })
         .eq("id", recipeId)
@@ -51,24 +44,17 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
       }
     }
     
-    // 2. Copiar al portapapeles
     navigator.clipboard.writeText(publicUrl)
     
-    // 3. Notificar y actualizar estado
-    setIsPublic(true) // Asegura que el estado local esté actualizado
+    setIsPublic(true)
     setIsLoading(false)
     toast({
       title: "Recipe Published & Link Copied!",
       description: "Your recipe is now public and the link is in your clipboard.",
     })
-    router.refresh() // Actualiza el estado del servidor
+    router.refresh()
   }
   
-  /**
-   * Lógica para el botón de DESPUBLICAR
-   * 1. Hace la receta privada en la DB
-   * 2. Muestra un toast y actualiza el estado
-   */
   const handleUnpublish = async () => {
     setIsLoading(true)
     
@@ -83,24 +69,25 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
       return
     }
     
-    setIsPublic(false) // Actualiza el estado local
+    setIsPublic(false)
     setIsLoading(false)
     toast({
       title: "Recipe is now Private",
       description: "Your recipe is no longer publicly visible.",
     })
-    router.refresh() // Actualiza el estado del servidor
+    router.refresh()
   }
 
   return (
-    // Contenedor que imita el layout anterior (botones en escritorio, iconos en móvil)
     <div className="flex gap-3 flex-shrink-0">
+      
+      {/* --- 2. AÑADIR EL NUEVO BOTÓN/POPOVER --- */}
+      <AddRecipeToCookbook recipeId={recipeId} />
+      {/* ------------------------------------- */}
       
       {/* --- Lógica de Botón Condicional --- */}
       {isPublic ? (
-        // --- YA ES PÚBLICA ---
         <>
-          {/* Botón de Despublicar */}
           <Button onClick={handleUnpublish} disabled={isLoading} variant="outline" className="hidden md:inline-flex">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
             Unpublish
@@ -109,7 +96,6 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
             <XCircle className="h-4 w-4" />
           </Button>
 
-          {/* Botón de Compartir (ya es pública, solo copia) */}
           <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
             Copy Link
@@ -119,9 +105,7 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
           </Button>
         </>
       ) : (
-        // --- ES PRIVADA ---
         <>
-          {/* Botón de Publicar y Compartir */}
           <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
             Publish & Share

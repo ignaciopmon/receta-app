@@ -245,3 +245,61 @@ input[type=number] {
 }
 
 /* --- FIN DE CURSORES PERSONALIZADOS --- */
+
+/* --- Cookbook Card Styles --- */
+.cookbook-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.cookbook-card:hover {
+  transform: rotateY(-15deg) scale(1.03);
+}
+
+.cookbook-cover {
+  position: relative;
+  z-index: 10;
+  transform-origin: left center;
+  transition: transform 0.4s ease;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.cookbook-card:hover .cookbook-cover {
+  transform: rotateY(-30deg);
+}
+
+.cookbook-spine {
+  position: absolute;
+  left: 0;
+  top: 2%;
+  height: 96%;
+  width: 28px; /* Ancho del lomo */
+  background: oklch(0.25 0.03 30); /* Color base del lomo */
+  transform: translateX(-100%) rotateY(90deg) translateX(50%);
+  transform-origin: right center;
+  border-radius: 4px 0 0 4px;
+  box-shadow: inset 5px 0 10px rgba(0,0,0,0.3);
+  color: white;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 5;
+}
+
+.dark .cookbook-spine {
+   background: oklch(0.9 0.01 90);
+   color: oklch(0.145 0 0);
+}

@@ -3,8 +3,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-// --- IMPORTAR 'Search' ---
-import { UtensilsCrossed, NotebookPen, SlidersHorizontal, Search } from "lucide-react"
+// --- AÑADIR 'BookOpen' ---
+import { UtensilsCrossed, NotebookPen, SlidersHorizontal, Search, BookOpen } from "lucide-react"
 import Link from "next/link"
 
 export function RecipeHeader() {
@@ -17,14 +17,21 @@ export function RecipeHeader() {
         </Link>
         <div className="flex items-center gap-3">
           
-          {/* --- BOTÓN DE BÚSQUEDA AÑADIDO --- */}
           <Button variant="outline" asChild size="sm">
             <Link href="/search">
               <Search className="mr-2 h-4 w-4" />
               Search
             </Link>
           </Button>
-          {/* --------------------------------- */}
+          
+          {/* --- NUEVO BOTÓN "MY COOKBOOKS" (Solo Escritorio) --- */}
+          <Button variant="outline" asChild size="sm" className="hidden md:inline-flex">
+            <Link href="/cookbooks">
+              <BookOpen className="mr-2 h-4 w-4" />
+              My Cookbooks
+            </Link>
+          </Button>
+          {/* ----------------------------------------------- */}
 
           <Button asChild size="sm">
             <Link href="/recipes/new">
