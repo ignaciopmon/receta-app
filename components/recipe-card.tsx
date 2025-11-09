@@ -2,11 +2,12 @@
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-// --- ICONOS ACTUALIZADOS ---
 import { ExternalLink, Archive, PenSquare, Star } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
+// --- 1. IMPORTAR useRouter ---
+import { useRouter } from "next/navigation" 
 import { createClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -18,14 +19,15 @@ interface RecipeCardProps {
   steps: string[]
   imageUrl?: string | null
   link?: string | null
-  onUpdate: () => void
+  // --- 2. HACER onUpdate OPCIONAL ---
+  onUpdate?: () => void
   category: string | null
   difficulty: string | null
   isFavorite: boolean
   rating: number | null
 }
 
-// Componente helper para las estrellas
+// ... (El componente StarRating no cambia) ...
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
     return (
@@ -52,6 +54,7 @@ function StarRating({ rating }: { rating: number | null }) {
   )
 }
 
+
 export function RecipeCard({
   id,
   name,
@@ -59,12 +62,14 @@ export function RecipeCard({
   steps,
   imageUrl,
   link,
-  onUpdate,
+  onUpdate, // <-- Ahora es opcional
   category,
   difficulty,
   isFavorite,
   rating,
 }: RecipeCardProps) {
+  // --- 3. OBTENER EL ROUTER ---
+  const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isFavoriting, setIsFavoriting] = useState(false)
   const [currentFavorite, setCurrentFavorite] = useState(isFavorite)
@@ -78,7 +83,14 @@ export function RecipeCard({
       const { error } = await supabase.from("recipes").update({ deleted_at: new Date().toISOString() }).eq("id", id)
 
       if (error) throw error
-      onUpdate()
+      
+      // --- 4. LÓGICA DE ACTUALIZACIÓN ---
+      if (onUpdate) {
+        onUpdate() // Llama a la función si existe (para /recipes)
+      } else {
+        router.refresh() // Recarga la página si no (para /cookbooks/[id])
+      }
+      
     } catch (error) {
       console.error("Error deleting recipe:", error)
       alert("Failed to delete recipe")
@@ -99,7 +111,14 @@ export function RecipeCard({
       if (error) throw error
       
       setCurrentFavorite(newFavoriteState)
-      onUpdate()
+      
+      // --- 5. LÓGICA DE ACTUALIZACIÓN ---
+      if (onUpdate) {
+        onUpdate() // Llama a la función si existe
+      } else {
+        router.refresh() // Recarga la página si no
+      }
+      
     } catch (error) {
       console.error("Error updating favorite:", error)
     } finally {
@@ -157,7 +176,6 @@ export function RecipeCard({
         </Button>
         <Button asChild variant="outline" size="icon">
           <Link href={`/recipes/edit/${id}`}>
-            {/* --- ICONO CAMBIADO --- */}
             <PenSquare className="h-4 w-4" />
           </Link>
         </Button>
@@ -169,7 +187,6 @@ export function RecipeCard({
           </Button>
         )}
         <Button variant="destructive" size="icon" onClick={handleDelete} disabled={isDeleting}>
-          {/* --- ICONO CAMBIADO --- */}
           <Archive className="h-4 w-4" />
         </Button>
       </CardFooter>
