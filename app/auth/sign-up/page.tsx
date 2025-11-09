@@ -1,3 +1,5 @@
+// app/auth/sign-up/page.tsx
+
 "use client"
 
 import type React from "react"
@@ -20,6 +22,10 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  // --- 1. EXPRESIÓN REGULAR PARA VALIDAR EL USERNAME ---
+  // Solo permite letras, números, guion bajo y guion, de 3 a 20 caracteres.
+  const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
@@ -38,6 +44,14 @@ export default function Page() {
       return
     }
 
+    // --- 2. NUEVA VALIDACIÓN AÑADIDA ---
+    if (!usernameRegex.test(username)) {
+      setError("Username can only contain letters, numbers, underscores (_), and hyphens (-).")
+      setIsLoading(false)
+      return
+    }
+    // --- FIN DE LA VALIDACIÓN ---
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -52,7 +66,18 @@ export default function Page() {
       if (error) throw error
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      // --- 3. MEJORA DEL MENSAJE DE ERROR DE SUPABASE ---
+      // Captura el error si el username ya existe (unique constraint)
+      if (error instanceof Error) {
+        if (error.message.includes("profiles_username_key")) {
+          setError("Username already taken. Please try another one.")
+        } else {
+          setError(error.message)
+        }
+      } else {
+        setError("An error occurred")
+      }
+      // --- FIN DE LA MEJORA ---
     } finally {
       setIsLoading(false)
     }
