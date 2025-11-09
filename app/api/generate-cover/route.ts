@@ -3,8 +3,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenAI } from "@google/genai"
-// --- LA CORRECCIÓN ESTÁ AQUÍ ---
-import { upload } from "@vercel/blob" // No es @vercel/blob/server
+// --- 1. LA CORRECCIÓN DE IMPORTACIÓN ---
+import { put } from "@vercel/blob" // Se importa 'put' para subidas desde el servidor
 
 // Inicializa el cliente de Google AI
 // Asegúrate de tener GOOGLE_API_KEY en tus variables de entorno
@@ -49,8 +49,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    // 3. Generar la imagen con Gemini
-    const generationPrompt = `Generate a beautiful, artistic book cover illustration for a cookbook titled "${prompt}". The style should be elegant, modern, and visually appealing. Do not include any text or words on the image. Focus on rich textures and imagery related to the cookbook title.`
+    // --- 2. EL PROMPT ACTUALIZADO A "VINTAGE" ---
+    const generationPrompt = `Generate a book cover illustration for a cookbook titled "${prompt}". The style must be vintage, emulating an antique cookbook. It should look classic, ornate, and old-fashioned. Do not include any text or words on the image. Focus on imagery related to the cookbook title, but with a retro or classic feel.`
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-image",
@@ -66,11 +66,16 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(imageData, "base64")
 
     // 4. Subir la imagen a Vercel Blob
-    const blob = await upload(`cookbook-covers/${user.id}/${cookbookId}.png`, buffer, {
-      access: "public",
-      handleUploadUrl: "/api/upload", // Reutiliza tu API route de upload
-      contentType: "image/png",
-    })
+    // --- 1. LA CORRECCIÓN DE FUNCIÓN (put) ---
+    const blob = await put( // Se usa 'put' en lugar de 'upload'
+      `cookbook-covers/${user.id}/${cookbookId}.png`, 
+      buffer, 
+      {
+        access: "public",
+        contentType: "image/png",
+        // handleUploadUrl no es necesario aquí porque 'put' es una subida directa
+      }
+    )
 
     // 5. Actualizar la base de datos con la nueva URL
     const { error: updateError } = await supabase
