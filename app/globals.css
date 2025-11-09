@@ -159,11 +159,6 @@
 
 /* --- Animaciones de la Landing Page --- */
 
-/* Keyframes para el Logo y Título:
-  1. Aparece (0% a 20%)
-  2. Se mantiene en el centro (20% a 60%)
-  3. Se mueve hacia arriba (60% a 100%)
-*/
 @keyframes logo-intro-and-move {
   0% {
     opacity: 0;
@@ -175,14 +170,10 @@
   }
   100% {
     opacity: 1;
-    transform: translateY(-90px); /* Sube 90px */
+    transform: translateY(-90px);
   }
 }
 
-/* Keyframes para los Botones:
-  1. Permanecen invisibles mientras el logo está en el centro (0% a 70%)
-  2. Aparecen suavemente (70% a 100%)
-*/
 @keyframes buttons-fade-in {
   0%, 70% {
     opacity: 0;
@@ -194,45 +185,55 @@
   }
 }
 
-/* Clases de utilidad para aplicar las animaciones */
 .animate-logo-intro-and-move {
-  /* Duración total de 2.5s, se queda en el estado final */
   animation: logo-intro-and-move 2.5s ease-in-out forwards;
 }
 
 .animate-buttons-fade-in {
-  /* Misma duración para estar sincronizado, se queda en el estado final */
   animation: buttons-fade-in 2.5s ease-in-out forwards;
   position: relative;
   z-index: 10;
 }
 
-/* --- CURSORES PERSONALIZADOS (AÑADIDO AL FINAL) --- */
+/* --- CURSORES PERSONALIZADOS (ACTUALIZADO) --- */
 
 /* 1. Cursor normal (flecha) para toda la página */
 html, body {
-  /* Usa el archivo .cur como cursor.
-    ¡Asegúrate de que el archivo se llame 'cursor.cur' y esté en la carpeta /public!
-    'auto' es el cursor de reserva si el archivo no carga.
+  /*
+    ¡IMPORTANTE! Si el cursor es muy grande,
+    es porque el archivo 'cursor.cur' es grande.
+    La mejor solución es usar un archivo .cur o .png
+    que tenga un tamaño de 32x32 píxeles.
   */
-  cursor: url('/cursor.cur'), auto;
+  cursor: url('/cursor.png'), auto;
 }
 
-/* 2. Cursor de puntero (mano) para elementos clicables */
-a, button, [role="button"], 
-[data-slot="button"], 
+/* 2. Cursor de puntero (mano) para elementos clicables
+   (LISTA DE SELECTORES AMPLIADA para mayor consistencia)
+*/
+a,
+button,
+label,
+.cursor-pointer,
+[role="button"],
+[role="link"],
+[role="switch"],
+[role="checkbox"],
+[role="radio"],
+[data-slot="button"],
 [data-slot="tabs-trigger"],
 [data-slot="select-trigger"],
-.cursor-pointer {
+[data-slot="collapsible-trigger"],
+[data-slot="accordion-trigger"] {
   /*
-    Usa el archivo .cur como puntero.
-    ¡Asegúrate de que el archivo se llame 'pointer.cur' y esté en la carpeta /public!
-    'pointer' es el cursor de reserva.
+    ¡IMPORTANTE! Igual que arriba,
+    necesitarás un archivo 'pointer.cur'
+    que tenga un tamaño de 32x32 píxeles.
   */
-  cursor: url('/pointer.cur'), pointer;
+  cursor: url('/pointer.png'), pointer;
 }
 
-/* 3. (Opcional) Forzar el cursor de texto al escribir */
+/* 3. Forzar el cursor de texto al escribir */
 input[type="text"], 
 input[type="email"], 
 input[type="password"],
