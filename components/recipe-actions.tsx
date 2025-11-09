@@ -36,7 +36,10 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
     
     // 1. Hacer pública (si no lo es ya)
     if (!isPublic) {
-      const { error }_ = await supabase
+      // --- CORRECCIÓN AQUÍ ---
+      // Se eliminó el '_' extra después de { error }
+      const { error } = await supabase
+      // --- FIN DE LA CORRECCIÓN ---
         .from("recipes")
         .update({ is_public: true })
         .eq("id", recipeId)
