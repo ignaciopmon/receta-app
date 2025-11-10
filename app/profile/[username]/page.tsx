@@ -4,16 +4,13 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { PublicRecipeCard } from "@/components/public-recipe-card"
-// --- 1. IMPORTAR NUEVOS COMPONENTES ---
 import { PublicCookbookCard } from "@/components/PublicCookbookCard"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { User, NotebookPen, BookOpen } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-// ------------------------------------
 
 export const dynamic = 'force-dynamic'
 
-// ... (la interfaz de Recipe no cambia) ...
 interface Recipe {
   id: string;
   name: string;
@@ -37,7 +34,6 @@ export default async function PublicProfilePage({
   const { username: encodedUsername } = await params
   const username = decodeURIComponent(encodedUsername)
   
-  // 2. Obtener perfil
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
@@ -48,7 +44,6 @@ export default async function PublicProfilePage({
     notFound()
   }
   
-  // 3. Obtener recetas públicas
   const { data: recipes, error: recipesError } = await supabase
     .from("recipes")
     .select("*")
@@ -59,13 +54,12 @@ export default async function PublicProfilePage({
 
   if (recipesError) {
     console.error("Error fetching recipes:", recipesError)
-    // No hacemos notFound, podemos tener cookbooks
   }
   
-  // 4. Obtener cookbooks públicos
+  // --- QUERY ACTUALIZADA (para incluir cover_color y cover_text) ---
   const { data: cookbooks, error: cookbooksError } = await supabase
     .from("cookbooks")
-    .select("*, cookbook_recipes(count)") // Contar recetas
+    .select("*, cover_color, cover_text, cookbook_recipes(count)") // Contar recetas
     .eq("user_id", profile.id)
     .eq("is_public", true)
     .order("created_at", { ascending: false })
@@ -91,14 +85,12 @@ export default async function PublicProfilePage({
             </div>
           </div>
           
-          {/* --- 5. AÑADIR SISTEMA DE PESTAÑAS --- */}
           <Tabs defaultValue="recipes" className="max-w-6xl mx-auto">
             <TabsList className="grid w-full grid-cols-2 md:w-[400px] mb-6">
               <TabsTrigger value="recipes">Recipes ({recipes?.length || 0})</TabsTrigger>
               <TabsTrigger value="cookbooks">Cookbooks ({cookbooks?.length || 0})</TabsTrigger>
             </TabsList>
             
-            {/* --- PESTAÑA DE RECETAS --- */}
             <TabsContent value="recipes">
               {recipes && recipes.length > 0 ? (
                 <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -133,7 +125,6 @@ export default async function PublicProfilePage({
               )}
             </TabsContent>
             
-            {/* --- PESTAÑA DE COOKBOOKS --- */}
             <TabsContent value="cookbooks">
               {cookbooks && cookbooks.length > 0 ? (
                 <div className="grid gap-6 md:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -143,7 +134,9 @@ export default async function PublicProfilePage({
                       id={cookbook.id}
                       name={cookbook.name}
                       description={cookbook.description}
-                      coverUrl={cookbook.cover_url}
+                      // --- PASAR LOS NUEVOS PROPS ---
+                      cover_color={cookbook.cover_color}
+                      cover_text={cookbook.cover_text}
                       recipeCount={cookbook.cookbook_recipes[0]?.count || 0}
                       username={profile.username}
                     />
@@ -164,7 +157,6 @@ export default async function PublicProfilePage({
               )}
             </TabsContent>
           </Tabs>
-          {/* --- FIN DEL SISTEMA DE PESTAÑAS --- */}
           
         </div>
       </main>

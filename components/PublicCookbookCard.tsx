@@ -1,73 +1,73 @@
 // components/PublicCookbookCard.tsx
 
 import Link from "next/link"
-import Image from "next/image"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { BookOpen, Users } from "lucide-react"
+import { Users } from "lucide-react"
 
 interface PublicCookbookCardProps {
   id: string
   name: string
   description: string | null
-  coverUrl: string | null
   recipeCount: number
   username: string
+  // --- CAMPOS DE PORTADA NUEVOS ---
+  cover_color: string | null
+  cover_text: string | null
 }
 
 export function PublicCookbookCard({
   id,
   name,
   description,
-  coverUrl,
   recipeCount,
   username,
+  cover_color,
+  cover_text,
 }: PublicCookbookCardProps) {
-  return (
-    <Link
-      href={`/profile/cookbook/${id}`}
-      className="block group cookbook-card"
-      style={{ perspective: "1000px" }}
-    >
-      {/* Lomo del Libro */}
-      <div className="cookbook-spine">{name}</div>
+  
+  const bgColor = cover_color || "#444444"
+  // Determina si el color de fondo es oscuro
+  const isDarkBg = parseInt(bgColor.substring(1, 3), 16) * 0.299 + 
+                   parseInt(bgColor.substring(3, 5), 16) * 0.587 + 
+                   parseInt(bgColor.substring(5, 7), 16) * 0.114 < 186
 
+  const textColorClass = isDarkBg ? "text-white" : "text-gray-900"
+
+  return (
+    <Link href={`/profile/cookbook/${id}`} className="block group cookbook-card" style={{ perspective: "1000px" }}>
+      {/* Lomo del Libro */}
+      <div className="cookbook-spine">
+        {name}
+      </div>
+      
       {/* Portada del Libro */}
-      <Card
-        className={cn(
-          "overflow-hidden cookbook-cover flex flex-col aspect-[4/5] w-full",
-          !coverUrl && "bg-muted/40",
-        )}
-      >
-        <CardHeader className="relative h-2/3 p-0">
-          {coverUrl ? (
-            <Image
-              src={coverUrl}
-              alt={name}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full bg-muted/60">
-              <BookOpen className="h-16 w-16 text-muted-foreground/50" />
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="p-4 flex flex-col justify-between flex-1">
-          <div>
-            <h3 className="font-serif font-bold text-lg leading-tight line-clamp-2">
-              {name}
-            </h3>
-            {description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {description}
-              </p>
+      <Card className={cn(
+        "overflow-hidden cookbook-cover flex flex-col aspect-[4/5] w-full"
+      )}>
+        {/* --- PORTADA DE COLOR/TEXTO --- */}
+         <CardHeader 
+          className="relative h-2/3 p-4 flex items-center justify-center text-center"
+          style={{ backgroundColor: bgColor }}
+        >
+          <h3 
+            className={cn(
+              "font-serif font-bold text-3xl leading-tight text-balance",
+              textColorClass
             )}
+          >
+            {cover_text || name}
+          </h3>
+        </CardHeader>
+        {/* --- FIN DE PORTADA --- */}
+
+        <CardContent className="p-4 flex flex-col justify-between flex-1 bg-card">
+          <div>
+            <h3 className="font-serif font-bold text-lg leading-tight line-clamp-2 text-card-foreground">{name}</h3>
+            {description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{description}</p>}
           </div>
           <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
-            <span>
-              {recipeCount} {recipeCount === 1 ? "recipe" : "recipes"}
-            </span>
+            <span>{recipeCount} {recipeCount === 1 ? 'recipe' : 'recipes'}</span>
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
               <span className="text-xs font-medium">@{username}</span>

@@ -18,6 +18,9 @@ interface Cookbook {
   name: string
   description: string | null
   is_public: boolean
+  // --- CAMPOS NUEVOS ---
+  cover_color: string | null
+  cover_text: string | null
 }
 
 interface EditCookbookFormProps {
@@ -33,6 +36,11 @@ export function EditCookbookForm({ cookbook, onClose }: EditCookbookFormProps) {
   const [name, setName] = useState(cookbook.name)
   const [description, setDescription] = useState(cookbook.description || "")
   const [isPublic, setIsPublic] = useState(cookbook.is_public)
+  
+  // --- NUEVOS ESTADOS PARA LA PORTADA ---
+  const [coverText, setCoverText] = useState(cookbook.cover_text || cookbook.name)
+  const [coverColor, setCoverColor] = useState(cookbook.cover_color || "#444444")
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,6 +62,9 @@ export function EditCookbookForm({ cookbook, onClose }: EditCookbookFormProps) {
           name: name.trim(),
           description: description.trim() || null,
           is_public: isPublic,
+          // --- GUARDAR DATOS DE PORTADA ---
+          cover_text: coverText.trim() || name.trim(),
+          cover_color: coverColor,
           updated_at: new Date().toISOString(),
         })
         .eq("id", cookbook.id)
@@ -94,6 +105,41 @@ export function EditCookbookForm({ cookbook, onClose }: EditCookbookFormProps) {
           rows={3}
         />
       </div>
+      
+      {/* --- SECCIÓN DE PORTADA --- */}
+      <fieldset className="space-y-4 rounded-lg border p-4">
+        <legend className="-ml-1 px-1 text-sm font-medium">Cover</legend>
+        <div className="space-y-2">
+          <Label htmlFor="coverText">Cover Title</Label>
+          <Input
+            id="coverText"
+            placeholder={cookbook.name}
+            value={coverText}
+            onChange={(e) => setCoverText(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="coverColor">Cover Color</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="coverColor"
+              type="color"
+              value={coverColor}
+              onChange={(e) => setCoverColor(e.target.value)}
+              className="w-16 p-1 h-10"
+            />
+            <Input
+              type="text"
+              value={coverColor}
+              onChange={(e) => setCoverColor(e.target.value)}
+              placeholder="#444444"
+              className="flex-1"
+            />
+          </div>
+        </div>
+      </fieldset>
+      {/* --- FIN SECCIÓN DE PORTADA --- */}
+
       <div className="flex items-center space-x-3">
         <Switch
           id="isPublic"

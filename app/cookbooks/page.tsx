@@ -22,9 +22,10 @@ export default async function CookbooksPage() {
   }
 
   // 1. Obtener todos los cookbooks del usuario
+  // --- QUERY ACTUALIZADA (para incluir cover_color y cover_text) ---
   const { data: cookbooks, error } = await supabase
     .from("cookbooks")
-    .select("*, cookbook_recipes(count)")
+    .select("*, cover_color, cover_text, cookbook_recipes(count)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -74,7 +75,9 @@ export default async function CookbooksPage() {
                   id={cookbook.id}
                   name={cookbook.name}
                   description={cookbook.description}
-                  coverUrl={cookbook.cover_url}
+                  // --- PASAR LOS NUEVOS PROPS ---
+                  cover_color={cookbook.cover_color}
+                  cover_text={cookbook.cover_text}
                   recipeCount={cookbook.cookbook_recipes[0]?.count || 0}
                   isPublic={cookbook.is_public}
                 />

@@ -26,11 +26,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import {
-  Wand2,
+  // --- 'Wand2' y 'Loader2' de IA eliminados ---
   PenSquare,
   Archive,
-  Loader2,
-  Globe,
+  Loader2, // Loader2 se sigue usando para borrar
   Share2,
 } from "lucide-react"
 import { EditCookbookForm } from "./EditCookbookForm"
@@ -39,8 +38,10 @@ interface Cookbook {
   id: string
   name: string
   description: string | null
-  cover_url: string | null
   is_public: boolean
+  // --- CAMPOS NUEVOS ---
+  cover_color: string | null
+  cover_text: string | null
 }
 
 interface CookbookActionsProps {
@@ -50,44 +51,13 @@ interface CookbookActionsProps {
 export function CookbookActions({ cookbook }: CookbookActionsProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [isGenerating, setIsGenerating] = useState(false)
+  // --- 'isGenerating' eliminado ---
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   
   const publicUrl = `${window.location.origin}/profile/cookbook/${cookbook.id}`
 
-  const handleGenerateCover = async () => {
-    setIsGenerating(true)
-    try {
-      const response = await fetch("/api/generate-cover", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: cookbook.name,
-          cookbookId: cookbook.id,
-        }),
-      })
-
-      if (!response.ok) {
-        const { error } = await response.json()
-        throw new Error(error || "Failed to generate cover.")
-      }
-
-      toast({
-        title: "Cover Generated!",
-        description: "Your new AI cover has been saved.",
-      })
-      router.refresh()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsGenerating(false)
-    }
-  }
+  // --- FUNCIÓN handleGenerateCover ELIMINADA ---
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -145,15 +115,7 @@ export function CookbookActions({ cookbook }: CookbookActionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Botón de Generar Portada */}
-      <Button variant="outline" onClick={handleGenerateCover} disabled={isGenerating}>
-        {isGenerating ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Wand2 className="mr-2 h-4 w-4" />
-        )}
-        Generate AI Cover
-      </Button>
+      {/* --- BOTÓN DE IA ELIMINADO --- */}
 
       {/* Botón de Compartir (si es público) */}
       {cookbook.is_public && (
