@@ -14,16 +14,17 @@ export const dynamic = 'force-dynamic'
 export default async function PublicCookbookPage({
   params,
 }: {
+  // --- LA CORRECCIÓN ESTÁ AQUÍ ---
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
+  // --- Y AQUÍ ---
+  const { id } = await params // Se usa 'await' para obtener el id
   const supabase = await createClient()
 
   // 1. Obtener el cookbook y verificar que es público
-  // Usamos un JOIN para obtener el nombre de usuario del dueño
   const { data: cookbook, error: cookbookError } = await supabase
     .from("cookbooks")
-    .select("*, profiles(username)")
+    .select("*, profiles(username), cover_color, cover_text") // Añadimos campos de portada
     .eq("id", id)
     .eq("is_public", true)
     .single()
