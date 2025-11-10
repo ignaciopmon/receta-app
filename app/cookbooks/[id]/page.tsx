@@ -8,7 +8,6 @@ import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft, CookingPot, Globe, Lock } from "lucide-react"
-// --- 1. IMPORTAR EL NUEVO COMPONENTE ---
 import { CookbookActions } from "@/components/CookbookActions"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -89,7 +88,6 @@ export default async function CookbookDetailPage({
               )}
             </div>
             
-            {/* --- 2. AÑADIR EL COMPONENTE DE ACCIONES --- */}
             <CookbookActions cookbook={cookbook} />
           </div>
           
@@ -114,7 +112,6 @@ export default async function CookbookDetailPage({
                   steps={recipe.steps}
                   imageUrl={recipe.image_url}
                   link={recipe.link}
-                  onUpdate={() => {}} // La recarga la manejará la página
                   category={recipe.category}
                   difficulty={recipe.difficulty}
                   isFavorite={recipe.is_favorite}
@@ -125,7 +122,6 @@ export default async function CookbookDetailPage({
           )}
         </div>
       </main>
-      {/* --- 3. AÑADIR EL TOASTER PARA NOTIFICACIONES --- */}
       <Toaster />
     </div>
   )
