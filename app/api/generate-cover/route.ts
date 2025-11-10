@@ -2,18 +2,17 @@
 
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { GoogleGenAI } from "@google/genai"
-// --- 1. LA CORRECCIÓN DE IMPORTACIÓN ---
-import { put } from "@vercel/blob" // Se importa 'put' para subidas desde el servidor
+import { put } from "@vercel/blob" // Para subir a Vercel Blob
 
-// Inicializa el cliente de Google AI
-// Asegúrate de tener GOOGLE_API_KEY en tus variables de entorno
-const ai = new GoogleGenAI(process.env.GOOGLE_API_KEY!)
+// --- Configuración de Freepik ---
+// (Mueve esta clave a .env.local como FREEPIK_API_KEY)
+const FREEPIK_API_KEY = "FPSX0c2cf6426e5d296aa4e2b7c54de0c0eb"
+const FREEPIK_URL = "https://api.freepik.com/v1/ai/gemini-2.5-flash-image-preview"
 
 export async function POST(request: Request) {
   const supabase = await createClient()
 
-  // 1. Validar usuario
+  // 1. Validar usuario (sin cambios)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
     )
   }
 
-  // 2. Validar que el usuario es dueño del cookbook
+  // 2. Validar que el usuario es dueño del cookbook (sin cambios)
   const { data: cookbook, error: cookbookError } = await supabase
     .from("cookbooks")
     .select("id")
@@ -49,35 +48,56 @@ export async function POST(request: Request) {
   }
 
   try {
-    // --- 2. EL PROMPT ACTUALIZADO A "VINTAGE" ---
-    const generationPrompt = `Generate a book cover illustration for a cookbook titled "${prompt}". The style must be vintage, emulating an antique cookbook. It should look classic, ornate, and old-fashioned. Do not include any text or words on the image. Focus on imagery related to the cookbook title, but with a retro or classic feel.`
+    // 3. Generar la imagen con Freepik
+    const generationPrompt = `A beautiful, artistic book cover illustration for a cookbook titled "${prompt}". The style must be vintage, emulating an antique cookbook. It should look classic, ornate, and old-fashioned. Do not include any text or words on the image. Focus on rich textures and imagery related to the cookbook title, but with a retro or classic feel.`
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
-      contents: generationPrompt,
-    })
-
-    const part = response.candidates[0].content.parts[0]
-    if (!part || !part.inlineData) {
-      throw new Error("AI did not return an image.")
+    const freepikOptions = {
+      method: 'POST',
+      headers: {
+        'x-freepik-api-key': process.env.FREEPIK_API_KEY || FREEPIK_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      // No usamos reference_images ni webhook_url para esta solicitud síncrona
+      body: JSON.stringify({
+        prompt: generationPrompt
+      })
     }
 
-    const imageData = part.inlineData.data
-    const buffer = Buffer.from(imageData, "base64")
+    const freepikResponse = await fetch(FREEPIK_URL, freepikOptions)
+    if (!freepikResponse.ok) {
+      const errorData = await freepikResponse.json()
+      throw new Error(`Freepik API Error: ${errorData.message || freepikResponse.statusText}`)
+    }
 
-    // 4. Subir la imagen a Vercel Blob
-    // --- 1. LA CORRECCIÓN DE FUNCIÓN (put) ---
-    const blob = await put( // Se usa 'put' en lugar de 'upload'
-      `cookbook-covers/${user.id}/${cookbookId}.png`, 
-      buffer, 
+    const freepikData = await freepikResponse.json()
+
+    // La respuesta de Freepik tiene la URL en data[0].url
+    const temporaryImageUrl = freepikData.data?.[0]?.url
+    if (!temporaryImageUrl) {
+      throw new Error("Freepik API did not return an image URL.")
+    }
+
+    // 4. Descargar la imagen de la URL temporal de Freepik
+    const imageResponse = await fetch(temporaryImageUrl)
+    if (!imageResponse.ok) {
+      throw new Error("Failed to download image from Freepik URL.")
+    }
+    // Convertir la imagen a un ArrayBuffer
+    const imageArrayBuffer = await imageResponse.arrayBuffer()
+    // Convertir el ArrayBuffer a un Buffer de Node.js
+    const imageBuffer = Buffer.from(imageArrayBuffer)
+
+    // 5. Subir la imagen (Buffer) a Vercel Blob
+    const blob = await put(
+      `cookbook-covers/${user.id}/${cookbookId}-${Date.now()}.png`, // Añadimos timestamp para evitar caché
+      imageBuffer,
       {
         access: "public",
         contentType: "image/png",
-        // handleUploadUrl no es necesario aquí porque 'put' es una subida directa
       }
     )
 
-    // 5. Actualizar la base de datos con la nueva URL
+    // 6. Actualizar la base de datos con la nueva URL de Vercel Blob
     const { error: updateError } = await supabase
       .from("cookbooks")
       .update({ cover_url: blob.url, updated_at: new Date().toISOString() })
@@ -87,7 +107,7 @@ export async function POST(request: Request) {
       throw updateError
     }
 
-    // 6. Devolver la nueva URL
+    // 7. Devolver la URL de Vercel Blob
     return NextResponse.json({ url: blob.url })
   } catch (error) {
     console.error("Error generating cover:", error)
