@@ -204,7 +204,7 @@ export function RecipeForm({
 
       router.replace("/recipes?t=" + Date.now())
     } catch (err) {
-      console.error("[v0] Error saving recipe:", err)
+      console.error("Error saving recipe:", err)
       setError(err instanceof Error ? err.message : "Failed to save recipe")
     } finally {
       setIsSubmitting(false)

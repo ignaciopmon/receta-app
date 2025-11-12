@@ -10,9 +10,8 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 const _playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 
 export const metadata: Metadata = {
-  title: "Cocina - Your Recipe Collection",
+  title: "Cocina",
   description: "Save and organize your favorite recipes",
-  generator: "v0.app",
 }
 
 // In app/layout.js

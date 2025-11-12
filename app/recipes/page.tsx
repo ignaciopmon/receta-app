@@ -54,7 +54,7 @@ export default function RecipesPage() {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("[v0] Page visible, refetching data")
+        console.log("Page visible, refetching data")
         fetchData()
       }
     }
@@ -80,12 +80,12 @@ export default function RecipesPage() {
       } = await supabase.auth.getUser()
 
       if (userError) {
-        console.error("[v0] User auth error:", userError)
+        console.error("User auth error:", userError)
         throw userError
       }
 
       if (!user) {
-        console.warn("[v0] No user found")
+        console.warn("No user found")
         setRecipes([])
         setIsLoading(false)
         return
@@ -96,7 +96,7 @@ export default function RecipesPage() {
       checkWelcomeModal(user.id)
       // ---------------------------------------
 
-      console.log("[v0] Fetching recipes for user:", user.id)
+      console.log("Fetching recipes for user:", user.id)
 
       const { data, error: fetchError } = await supabase
         .from("recipes")
@@ -106,17 +106,17 @@ export default function RecipesPage() {
         .order("created_at", { ascending: false })
 
       if (fetchError) {
-        console.error("[v0] Fetch error:", fetchError)
+        console.error("Fetch error:", fetchError)
         throw fetchError
       }
 
-      console.log("[v0] Fetched recipes count:", data?.length || 0)
+      console.log("Fetched recipes count:", data?.length || 0)
       if (data) {
-        console.log("[v0] First recipe sample:", data[0])
+        console.log("First recipe sample:", data[0])
       }
       setRecipes(data || [])
     } catch (error) {
-      console.error("[v0] Error fetching data:", error)
+      console.error("Error fetching data:", error)
       setError(error instanceof Error ? error.message : "Failed to fetch recipes")
     } finally {
       setTimeout(() => setIsLoading(false), 300)
