@@ -1,3 +1,5 @@
+// app/recipes/page.tsx
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -28,7 +30,6 @@ interface Recipe {
   is_favorite: boolean
   tags: string[] | null
   rating: number | null
-  // --- NUEVO CAMPO ---
   is_component: boolean
 }
 
@@ -89,17 +90,20 @@ export default function RecipesPage() {
       
       checkWelcomeModal(user.id)
 
-      // --- FILTRO ACTUALIZADO: is_component = false ---
-      // Solo mostramos recetas principales, no sub-recetas
+      // --- VERSIÓN SEGURA ---
+      // Hemos quitado el filtro .eq("is_component", false) para asegurar que carga todo
+      // sin importar el estado de esa columna.
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select("*")
         .eq("user_id", user.id)
         .is("deleted_at", null)
-        .eq("is_component", false) // <--- IMPORTANTE
         .order("created_at", { ascending: false })
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        console.error("Supabase error:", fetchError)
+        throw fetchError
+      }
 
       setRecipes(data || [])
     } catch (error) {
@@ -118,16 +122,16 @@ export default function RecipesPage() {
         .eq("user_id", userId)
         .single()
 
-      if (prefsError) throw prefsError
+      if (prefsError && prefsError.code !== 'PGRST116') {
+         console.log("Pref error ignore", prefsError)
+      }
       
       if (prefsData && !prefsData.has_seen_welcome_modal) {
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData } = await supabase
           .from("profiles")
           .select("username")
           .eq("id", userId)
           .single()
-        
-        if (profileError) throw profileError
         
         if (profileData) {
           setWelcomeUsername(profileData.username)
