@@ -6,15 +6,13 @@ import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-// --- IMPORTAMOS LOS ICONOS NUEVOS ---
-import { ArrowLeft, Clock, Users, Star } from "lucide-react"
+import { ArrowLeft, Clock, Users, Star, Layers, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Toaster } from "@/components/ui/toaster"
 import { RecipeActions } from "@/components/recipe-actions"
-import { cn } from "@/lib/utils" // Importamos cn
+import { cn } from "@/lib/utils"
 
-// --- Componente de Rating (movido aquí para uso local) ---
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
     return (
@@ -38,8 +36,6 @@ function StarRating({ rating }: { rating: number | null }) {
     </div>
   )
 }
-// ---------------------------------------------------
-
 
 export default async function RecipeDetailPage({
   params,
@@ -65,10 +61,17 @@ export default async function RecipeDetailPage({
   if (recipeError || !recipe) {
     notFound()
   }
+  
+  // --- FETCH SUB-RECETAS ---
+  const { data: components } = await supabase
+    .from("recipe_components")
+    .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url, prep_time, cook_time)")
+    .eq("parent_recipe_id", id)
+  
+  const subRecipes = components?.map((c: any) => c.recipes) || []
+  // -------------------------
 
-  // --- Lógica para el tiempo total ---
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
-  // ----------------------------------
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -97,10 +100,8 @@ export default async function RecipeDetailPage({
                 initialIsPublic={recipe.is_public}
                 link={recipe.link}
               />
-              
             </div>
 
-            {/* --- BLOQUE DE METADATOS NUEVO --- */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground">
               {recipe.category && <Badge variant="outline">{recipe.category}</Badge>}
               {recipe.difficulty && <Badge variant="secondary">{recipe.difficulty}</Badge>}
@@ -128,7 +129,42 @@ export default async function RecipeDetailPage({
                 <StarRating rating={recipe.rating} />
               </div>
             </div>
-            {/* --- FIN DEL BLOQUE --- */}
+
+            {/* --- SECCIÓN DE SUB-RECETAS --- */}
+            {subRecipes.length > 0 && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                     <Layers className="h-5 w-5 text-primary" />
+                     <CardTitle className="font-serif text-lg">Includes</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="grid gap-3 sm:grid-cols-2">
+                  {subRecipes.map((sub: any) => (
+                    <Link key={sub.id} href={`/recipes/${sub.id}`}>
+                       <div className="flex items-center gap-3 p-2 rounded-md bg-background border hover:shadow-sm transition-all group">
+                          <div className="relative h-12 w-12 rounded overflow-hidden bg-muted shrink-0">
+                             <Image 
+                                src={sub.image_url || "/placeholder.svg"} 
+                                alt={sub.name} 
+                                fill 
+                                className="object-cover"
+                             />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                             <p className="font-medium truncate group-hover:text-primary transition-colors">{sub.name}</p>
+                             <p className="text-xs text-muted-foreground">
+                                {(sub.prep_time || 0) + (sub.cook_time || 0) > 0 ? `${(sub.prep_time || 0) + (sub.cook_time || 0)} mins` : 'Sub-recipe'}
+                             </p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                       </div>
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            {/* ------------------------------- */}
 
             <Card>
               <CardHeader>

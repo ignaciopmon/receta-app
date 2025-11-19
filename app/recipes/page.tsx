@@ -11,7 +11,7 @@ import Link from "next/link"
 import { CookingPot, Search, NotebookPen } from "lucide-react"
 import { RecipeCardSkeleton } from "@/components/recipe-card-skeleton"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import { WelcomeModal } from "@/components/welcome-modal" // --- 1. IMPORTAR EL MODAL ---
+import { WelcomeModal } from "@/components/welcome-modal"
 
 interface Recipe {
   id: string
@@ -28,6 +28,8 @@ interface Recipe {
   is_favorite: boolean
   tags: string[] | null
   rating: number | null
+  // --- NUEVO CAMPO ---
+  is_component: boolean
 }
 
 export default function RecipesPage() {
@@ -41,16 +43,14 @@ export default function RecipesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // --- 2. AÑADIR ESTADOS PARA EL MODAL ---
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [welcomeUsername, setWelcomeUsername] = useState("")
   const [welcomeUserId, setWelcomeUserId] = useState("")
-  // ------------------------------------
 
   const supabase = createClient()
 
   useEffect(() => {
-    fetchData() // Cambiamos el nombre para reflejar que hace más que solo 'fetchRecipes'
+    fetchData()
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -79,41 +79,28 @@ export default function RecipesPage() {
         error: userError,
       } = await supabase.auth.getUser()
 
-      if (userError) {
-        console.error("User auth error:", userError)
-        throw userError
-      }
+      if (userError) throw userError
 
       if (!user) {
-        console.warn("No user found")
         setRecipes([])
         setIsLoading(false)
         return
       }
       
-      // --- 3. LÓGICA PARA COMPROBAR EL MODAL ---
-      // (Se ejecuta en paralelo a la carga de recetas)
       checkWelcomeModal(user.id)
-      // ---------------------------------------
 
-      console.log("Fetching recipes for user:", user.id)
-
+      // --- FILTRO ACTUALIZADO: is_component = false ---
+      // Solo mostramos recetas principales, no sub-recetas
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select("*")
         .eq("user_id", user.id)
         .is("deleted_at", null)
+        .eq("is_component", false) // <--- IMPORTANTE
         .order("created_at", { ascending: false })
 
-      if (fetchError) {
-        console.error("Fetch error:", fetchError)
-        throw fetchError
-      }
+      if (fetchError) throw fetchError
 
-      console.log("Fetched recipes count:", data?.length || 0)
-      if (data) {
-        console.log("First recipe sample:", data[0])
-      }
       setRecipes(data || [])
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -123,7 +110,6 @@ export default function RecipesPage() {
     }
   }
 
-  // --- 4. NUEVA FUNCIÓN PARA EL MODAL ---
   const checkWelcomeModal = async (userId: string) => {
     try {
       const { data: prefsData, error: prefsError } = await supabase
@@ -134,7 +120,6 @@ export default function RecipesPage() {
 
       if (prefsError) throw prefsError
       
-      // Si el flag es FALSO, mostramos el modal
       if (prefsData && !prefsData.has_seen_welcome_modal) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
@@ -147,15 +132,13 @@ export default function RecipesPage() {
         if (profileData) {
           setWelcomeUsername(profileData.username)
           setWelcomeUserId(userId)
-          setShowWelcomeModal(true) // ¡Activamos el modal!
+          setShowWelcomeModal(true)
         }
       }
     } catch (welcomeError) {
       console.error("Error checking for welcome modal:", welcomeError)
-      // No hacemos nada si esto falla, simplemente no se muestra el modal.
     }
   }
-  // ------------------------------------
 
 
   const filterRecipes = () => {
@@ -272,8 +255,7 @@ export default function RecipesPage() {
                 No recipes yet
               </EmptyTitle>
               <EmptyDescription className="max-w-md">
-                Start your culinary journey by adding your first recipe. Share your favorite dishes and keep them
-                organized in one place.
+                Start your culinary journey by adding your first recipe.
               </EmptyDescription>
               <Button asChild size="lg" className="mt-4">
                 <Link href="/recipes/new">
@@ -312,7 +294,7 @@ export default function RecipesPage() {
                 No recipes found
               </EmptyTitle>
               <EmptyDescription className="max-w-md">
-                Try adjusting your search or filters to find what you're looking for.
+                Try adjusting your search or filters.
               </EmptyDescription>
               <Button
                 variant="outline"
@@ -331,8 +313,6 @@ export default function RecipesPage() {
           )}
         </div>
       </main>
-
-      {/* --- 5. RENDERIZAR EL MODAL SI showWelcomeModal ES TRUE --- */}
       {showWelcomeModal && (
         <WelcomeModal
           userId={welcomeUserId}
@@ -340,7 +320,6 @@ export default function RecipesPage() {
           onClose={() => setShowWelcomeModal(false)}
         />
       )}
-      {/* ---------------------------------------------------- */}
     </div>
   )
 }

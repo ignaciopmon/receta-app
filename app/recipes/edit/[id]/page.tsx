@@ -51,11 +51,11 @@ export default async function EditRecipePage({
             initialDifficulty={recipe.difficulty}
             initialIsFavorite={recipe.is_favorite}
             initialRating={recipe.rating}
-            // --- PROPS NUEVOS AÑADIDOS ---
             initialPrepTime={recipe.prep_time}
             initialCookTime={recipe.cook_time}
             initialServings={recipe.servings}
-            // ---------------------------
+            // --- PASAR ESTADO DE COMPONENTE ---
+            initialIsComponent={recipe.is_component} 
           />
         </div>
       </main>

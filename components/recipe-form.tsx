@@ -3,18 +3,28 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, X, Loader2, CookingPot, Star } from "lucide-react" // Clock, Users
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Plus, X, Loader2, CookingPot, Layers, Search, Check } from "lucide-react" 
 import { upload } from "@vercel/blob/client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { Badge } from "@/components/ui/badge"
 
 interface RecipeFormProps {
   recipeId?: string
@@ -29,11 +39,17 @@ interface RecipeFormProps {
   initialDifficulty?: string | null
   initialIsFavorite?: boolean
   initialRating?: number | null
-  // --- NUEVOS PROPS AÑADIDOS ---
   initialPrepTime?: number | null
   initialCookTime?: number | null
   initialServings?: number | null
-  // ---------------------------
+  // --- NUEVO PROP ---
+  initialIsComponent?: boolean
+}
+
+// Interfaz para búsqueda de componentes
+interface SimpleRecipe {
+  id: string
+  name: string
 }
 
 export function RecipeForm({
@@ -49,10 +65,10 @@ export function RecipeForm({
   initialDifficulty = "easy",
   initialIsFavorite = false,
   initialRating = 0,
-  // --- VALORES INICIALES PARA LOS NUEVOS PROPS ---
   initialPrepTime = null,
   initialCookTime = null,
   initialServings = null,
+  initialIsComponent = false,
 }: RecipeFormProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -80,15 +96,62 @@ export function RecipeForm({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
   const [rating, setRating] = useState(initialRating || 0)
 
-  // --- NUEVOS ESTADOS AÑADIDOS ---
-  // Usamos string para los inputs, se convertirán a número al guardar
   const [prepTime, setPrepTime] = useState(initialPrepTime?.toString() || "")
   const [cookTime, setCookTime] = useState(initialCookTime?.toString() || "")
   const [servings, setServings] = useState(initialServings?.toString() || "")
-  // ------------------------------
+  
+  // --- ESTADOS PARA SUB-RECETAS ---
+  const [isComponent, setIsComponent] = useState(initialIsComponent)
+  const [linkedComponents, setLinkedComponents] = useState<SimpleRecipe[]>([])
+  const [availableComponents, setAvailableComponents] = useState<SimpleRecipe[]>([])
+  const [isComponentSearchOpen, setIsComponentSearchOpen] = useState(false)
+  // -------------------------------
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // --- CARGAR COMPONENTES SI ESTAMOS EDITANDO ---
+  useEffect(() => {
+    if (isEditing && recipeId) {
+      fetchLinkedComponents()
+    }
+    // Siempre cargar posibles componentes para añadir (excepto el actual)
+    fetchAvailableComponents()
+  }, [recipeId])
+
+  const fetchLinkedComponents = async () => {
+    const { data, error } = await supabase
+      .from("recipe_components")
+      .select("component_recipe_id, recipes!recipe_components_component_recipe_id_fkey(id, name)")
+      .eq("parent_recipe_id", recipeId)
+    
+    if (!error && data) {
+      // Mapear la respuesta al formato SimpleRecipe
+      const mapped = data.map((item: any) => ({
+        id: item.recipes.id,
+        name: item.recipes.name
+      }))
+      setLinkedComponents(mapped)
+    }
+  }
+
+  const fetchAvailableComponents = async () => {
+    // Buscar recetas que sean componentes
+    let query = supabase
+      .from("recipes")
+      .select("id, name")
+      .eq("is_component", true)
+      .is("deleted_at", null)
+    
+    if (recipeId) {
+      query = query.neq("id", recipeId) // No enlazarse a sí mismo
+    }
+
+    const { data } = await query
+    if (data) {
+      setAvailableComponents(data)
+    }
+  }
 
   const addIngredient = () => {
     setIngredients([...ingredients, ""])
@@ -133,6 +196,19 @@ export function RecipeForm({
       reader.readAsDataURL(file)
     }
   }
+  
+  // --- MANEJO DE COMPONENTES VINCULADOS (SOLO EN MEMORIA HASTA GUARDAR) ---
+  const addComponent = (component: SimpleRecipe) => {
+    if (!linkedComponents.find(c => c.id === component.id)) {
+      setLinkedComponents([...linkedComponents, component])
+    }
+    setIsComponentSearchOpen(false)
+  }
+
+  const removeComponent = (id: string) => {
+    setLinkedComponents(linkedComponents.filter(c => c.id !== id))
+  }
+  // ---------------------------------------------------------------------
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -180,14 +256,15 @@ export function RecipeForm({
         difficulty,
         is_favorite: isFavorite,
         rating,
-        // --- CAMPOS NUEVOS AÑADIDOS AL GUARDAR ---
-        // Convierte el string del input a número, o a null si está vacío
         prep_time: prepTime ? parseInt(prepTime, 10) : null,
         cook_time: cookTime ? parseInt(cookTime, 10) : null,
         servings: servings ? parseInt(servings, 10) : null,
-        // ------------------------------------
+        // --- GUARDAR EL ESTADO DE SUB-RECETA ---
+        is_component: isComponent,
         user_id: user.id,
       }
+
+      let finalRecipeId = recipeId
 
       if (isEditing) {
         const { user_id, ...updateData } = recipeData
@@ -198,9 +275,34 @@ export function RecipeForm({
 
         if (updateError) throw updateError
       } else {
-        const { error: insertError } = await supabase.from("recipes").insert(recipeData)
+        const { data: newRecipe, error: insertError } = await supabase
+          .from("recipes")
+          .insert(recipeData)
+          .select("id")
+          .single()
+          
         if (insertError) throw insertError
+        finalRecipeId = newRecipe.id
       }
+      
+      // --- GUARDAR RELACIONES DE COMPONENTES ---
+      if (finalRecipeId) {
+        // 1. Borrar relaciones existentes (estrategia simple: borrar y recrear)
+        if (isEditing) {
+          await supabase.from("recipe_components").delete().eq("parent_recipe_id", finalRecipeId)
+        }
+        
+        // 2. Insertar nuevas relaciones
+        if (linkedComponents.length > 0) {
+          const relations = linkedComponents.map(comp => ({
+            parent_recipe_id: finalRecipeId,
+            component_recipe_id: comp.id
+          }))
+          const { error: relationError } = await supabase.from("recipe_components").insert(relations)
+          if (relationError) throw relationError
+        }
+      }
+      // -----------------------------------------
 
       router.replace("/recipes?t=" + Date.now())
     } catch (err) {
@@ -228,6 +330,25 @@ export function RecipeForm({
               required
             />
           </div>
+          
+          {/* --- SWITCH DE SUB-RECETA --- */}
+          <div className="flex items-center space-x-2 rounded-md border p-4">
+            <Layers className="h-5 w-5 text-muted-foreground" />
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium leading-none">
+                Sub-recipe / Component
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Enable this if this recipe is a part of another recipe (e.g., a Glaze). It won't appear in your main list.
+              </p>
+            </div>
+            <Switch
+              id="isComponent"
+              checked={isComponent}
+              onCheckedChange={setIsComponent}
+            />
+          </div>
+          {/* ---------------------------- */}
 
           <div className="space-y-2">
             <Label htmlFor="link">Recipe Link (optional)</Label>
@@ -254,6 +375,69 @@ export function RecipeForm({
         </CardContent>
       </Card>
 
+      {/* --- SECCIÓN DE COMPONENTES VINCULADOS (Solo si NO es un componente) --- */}
+      {!isComponent && (
+        <Card>
+           <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="font-serif">Included Sub-recipes</CardTitle>
+                <CardDescription>Include sauces, glazes, or sides you've already created.</CardDescription>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsComponentSearchOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Component
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {linkedComponents.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">No sub-recipes linked.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {linkedComponents.map(comp => (
+                  <Badge key={comp.id} variant="secondary" className="px-3 py-1 text-sm flex items-center gap-2">
+                    <Layers className="h-3 w-3" />
+                    {comp.name}
+                    <button type="button" onClick={() => removeComponent(comp.id)} className="ml-1 hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            
+            {/* DIALOGO DE BÚSQUEDA SIMPLE */}
+            <CommandDialog open={isComponentSearchOpen} onOpenChange={setIsComponentSearchOpen}>
+              <Command>
+                <CommandInput placeholder="Search your components..." />
+                <CommandList>
+                  <CommandEmpty>No components found.</CommandEmpty>
+                  <CommandGroup heading="Available Components">
+                    {availableComponents.map((comp) => {
+                      const isSelected = linkedComponents.some(c => c.id === comp.id)
+                      return (
+                        <CommandItem
+                          key={comp.id}
+                          onSelect={() => addComponent(comp)}
+                          disabled={isSelected}
+                        >
+                          <Layers className="mr-2 h-4 w-4" />
+                          <span>{comp.name}</span>
+                          {isSelected && <Check className="ml-auto h-4 w-4" />}
+                        </CommandItem>
+                      )
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </CommandDialog>
+
+          </CardContent>
+        </Card>
+      )}
+      {/* ------------------------------------------------------------------- */}
+
       <Card>
         <CardHeader>
           <CardTitle className="font-serif">Details</CardTitle>
@@ -272,6 +456,8 @@ export function RecipeForm({
                 <SelectItem value="dessert">Dessert</SelectItem>
                 <SelectItem value="snack">Snack</SelectItem>
                 <SelectItem value="beverage">Beverage</SelectItem>
+                {/* Nueva categoría útil para componentes */}
+                <SelectItem value="sauce">Sauce / Component</SelectItem> 
               </SelectContent>
             </Select>
           </div>
@@ -290,7 +476,6 @@ export function RecipeForm({
             </Select>
           </div>
           
-          {/* --- BLOQUE NUEVO AÑADIDO --- */}
           <div className="grid grid-cols-2 gap-4 md:col-span-2">
             <div className="space-y-2">
               <Label htmlFor="prepTime">Prep Time (mins)</Label>
@@ -327,7 +512,6 @@ export function RecipeForm({
               onChange={(e) => setServings(e.target.value)}
             />
           </div>
-          {/* --- FIN DEL BLOQUE --- */}
           
           <div className="space-y-2">
             <Label htmlFor="rating">Rating</Label>
