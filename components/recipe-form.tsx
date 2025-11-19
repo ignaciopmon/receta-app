@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Plus, X, Loader2, CookingPot, Layers, Search, Check } from "lucide-react" 
+import { Plus, X, Loader2, CookingPot, Layers, Check } from "lucide-react" 
 import { upload } from "@vercel/blob/client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -25,6 +25,7 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
 
 interface RecipeFormProps {
   recipeId?: string
@@ -42,11 +43,9 @@ interface RecipeFormProps {
   initialPrepTime?: number | null
   initialCookTime?: number | null
   initialServings?: number | null
-  // --- NUEVO PROP ---
   initialIsComponent?: boolean
 }
 
-// Interfaz para búsqueda de componentes
 interface SimpleRecipe {
   id: string
   name: string
@@ -91,6 +90,7 @@ export function RecipeForm({
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initialImageUrl)
   
+  // Ajustamos la categoría inicial si cambiamos de tipo de receta
   const [category, setCategory] = useState(initialCategory || "lunch")
   const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
@@ -100,22 +100,34 @@ export function RecipeForm({
   const [cookTime, setCookTime] = useState(initialCookTime?.toString() || "")
   const [servings, setServings] = useState(initialServings?.toString() || "")
   
-  // --- ESTADOS PARA SUB-RECETAS ---
   const [isComponent, setIsComponent] = useState(initialIsComponent)
   const [linkedComponents, setLinkedComponents] = useState<SimpleRecipe[]>([])
   const [availableComponents, setAvailableComponents] = useState<SimpleRecipe[]>([])
   const [isComponentSearchOpen, setIsComponentSearchOpen] = useState(false)
-  // -------------------------------
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // --- CARGAR COMPONENTES SI ESTAMOS EDITANDO ---
+  // --- EFECTO: Resetear categoría al cambiar tipo de receta ---
+  useEffect(() => {
+    if (isComponent) {
+      // Si cambiamos a componente, ponemos una por defecto de componentes si la actual no lo es
+      if (!["sauce", "glaze", "cream", "filling", "dough", "topping", "other_component"].includes(category)) {
+        setCategory("sauce")
+      }
+    } else {
+       // Si volvemos a receta normal, ponemos una normal por defecto
+       if (["sauce", "glaze", "cream", "filling", "dough", "topping", "other_component"].includes(category)) {
+        setCategory("lunch")
+       }
+    }
+  }, [isComponent])
+  // ---------------------------------------------------------
+
   useEffect(() => {
     if (isEditing && recipeId) {
       fetchLinkedComponents()
     }
-    // Siempre cargar posibles componentes para añadir (excepto el actual)
     fetchAvailableComponents()
   }, [recipeId])
 
@@ -126,7 +138,6 @@ export function RecipeForm({
       .eq("parent_recipe_id", recipeId)
     
     if (!error && data) {
-      // Mapear la respuesta al formato SimpleRecipe
       const mapped = data.map((item: any) => ({
         id: item.recipes.id,
         name: item.recipes.name
@@ -136,7 +147,6 @@ export function RecipeForm({
   }
 
   const fetchAvailableComponents = async () => {
-    // Buscar recetas que sean componentes
     let query = supabase
       .from("recipes")
       .select("id, name")
@@ -144,7 +154,7 @@ export function RecipeForm({
       .is("deleted_at", null)
     
     if (recipeId) {
-      query = query.neq("id", recipeId) // No enlazarse a sí mismo
+      query = query.neq("id", recipeId)
     }
 
     const { data } = await query
@@ -197,7 +207,6 @@ export function RecipeForm({
     }
   }
   
-  // --- MANEJO DE COMPONENTES VINCULADOS (SOLO EN MEMORIA HASTA GUARDAR) ---
   const addComponent = (component: SimpleRecipe) => {
     if (!linkedComponents.find(c => c.id === component.id)) {
       setLinkedComponents([...linkedComponents, component])
@@ -208,7 +217,6 @@ export function RecipeForm({
   const removeComponent = (id: string) => {
     setLinkedComponents(linkedComponents.filter(c => c.id !== id))
   }
-  // ---------------------------------------------------------------------
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -246,6 +254,8 @@ export function RecipeForm({
         imageUrl = blob.url
       }
       
+      // --- LÓGICA DE GUARDADO CONDICIONAL ---
+      // Si es componente, forzamos null/false en los campos que no aplican
       const recipeData = {
         name: name.trim(),
         ingredients: filteredIngredients,
@@ -254,15 +264,17 @@ export function RecipeForm({
         link: link.trim() || null,
         category,
         difficulty,
-        is_favorite: isFavorite,
-        rating,
-        prep_time: prepTime ? parseInt(prepTime, 10) : null,
-        cook_time: cookTime ? parseInt(cookTime, 10) : null,
-        servings: servings ? parseInt(servings, 10) : null,
-        // --- GUARDAR EL ESTADO DE SUB-RECETA ---
+        // Campos ocultos en componentes:
+        is_favorite: isComponent ? false : isFavorite,
+        rating: isComponent ? null : rating,
+        prep_time: isComponent ? null : (prepTime ? parseInt(prepTime, 10) : null),
+        cook_time: isComponent ? null : (cookTime ? parseInt(cookTime, 10) : null),
+        servings: isComponent ? null : (servings ? parseInt(servings, 10) : null),
+        
         is_component: isComponent,
         user_id: user.id,
       }
+      // -------------------------------------
 
       let finalRecipeId = recipeId
 
@@ -285,14 +297,11 @@ export function RecipeForm({
         finalRecipeId = newRecipe.id
       }
       
-      // --- GUARDAR RELACIONES DE COMPONENTES ---
       if (finalRecipeId) {
-        // 1. Borrar relaciones existentes (estrategia simple: borrar y recrear)
         if (isEditing) {
           await supabase.from("recipe_components").delete().eq("parent_recipe_id", finalRecipeId)
         }
         
-        // 2. Insertar nuevas relaciones
         if (linkedComponents.length > 0) {
           const relations = linkedComponents.map(comp => ({
             parent_recipe_id: finalRecipeId,
@@ -302,7 +311,6 @@ export function RecipeForm({
           if (relationError) throw relationError
         }
       }
-      // -----------------------------------------
 
       router.replace("/recipes?t=" + Date.now())
     } catch (err) {
@@ -331,15 +339,14 @@ export function RecipeForm({
             />
           </div>
           
-          {/* --- SWITCH DE SUB-RECETA --- */}
-          <div className="flex items-center space-x-2 rounded-md border p-4">
+          <div className="flex items-center space-x-2 rounded-md border p-4 transition-colors hover:bg-muted/20">
             <Layers className="h-5 w-5 text-muted-foreground" />
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
                 Sub-recipe / Component
               </p>
               <p className="text-xs text-muted-foreground">
-                Enable this if this recipe is a part of another recipe (e.g., a Glaze). It won't appear in your main list.
+                Enable this if this recipe is a building block (e.g., Glaze, Dough). It won't appear in your main list and won't have ratings or time.
               </p>
             </div>
             <Switch
@@ -348,7 +355,6 @@ export function RecipeForm({
               onCheckedChange={setIsComponent}
             />
           </div>
-          {/* ---------------------------- */}
 
           <div className="space-y-2">
             <Label htmlFor="link">Recipe Link (optional)</Label>
@@ -375,7 +381,6 @@ export function RecipeForm({
         </CardContent>
       </Card>
 
-      {/* --- SECCIÓN DE COMPONENTES VINCULADOS (Solo si NO es un componente) --- */}
       {!isComponent && (
         <Card>
            <CardHeader>
@@ -407,7 +412,6 @@ export function RecipeForm({
               </div>
             )}
             
-            {/* DIALOGO DE BÚSQUEDA SIMPLE */}
             <CommandDialog open={isComponentSearchOpen} onOpenChange={setIsComponentSearchOpen}>
               <Command>
                 <CommandInput placeholder="Search your components..." />
@@ -436,7 +440,6 @@ export function RecipeForm({
           </CardContent>
         </Card>
       )}
-      {/* ------------------------------------------------------------------- */}
 
       <Card>
         <CardHeader>
@@ -450,14 +453,29 @@ export function RecipeForm({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="breakfast">Breakfast</SelectItem>
-                <SelectItem value="lunch">Lunch</SelectItem>
-                <SelectItem value="dinner">Dinner</SelectItem>
-                <SelectItem value="dessert">Dessert</SelectItem>
-                <SelectItem value="snack">Snack</SelectItem>
-                <SelectItem value="beverage">Beverage</SelectItem>
-                {/* Nueva categoría útil para componentes */}
-                <SelectItem value="sauce">Sauce / Component</SelectItem> 
+                {/* --- CATEGORÍAS DINÁMICAS --- */}
+                {isComponent ? (
+                  <>
+                    <SelectItem value="sauce">Sauce / Salsa</SelectItem>
+                    <SelectItem value="glaze">Glaze / Glaseado</SelectItem>
+                    <SelectItem value="cream">Cream / Crema</SelectItem>
+                    <SelectItem value="filling">Filling / Relleno</SelectItem>
+                    <SelectItem value="dough">Dough / Masa</SelectItem>
+                    <SelectItem value="topping">Topping / Cobertura</SelectItem>
+                    <SelectItem value="seasoning">Seasoning / Sazón</SelectItem>
+                    <SelectItem value="other_component">Other Component</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                    <SelectItem value="lunch">Lunch</SelectItem>
+                    <SelectItem value="dinner">Dinner</SelectItem>
+                    <SelectItem value="dessert">Dessert</SelectItem>
+                    <SelectItem value="snack">Snack</SelectItem>
+                    <SelectItem value="beverage">Beverage</SelectItem>
+                  </>
+                )}
+                {/* ------------------------- */}
               </SelectContent>
             </Select>
           </div>
@@ -476,66 +494,72 @@ export function RecipeForm({
             </Select>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 md:col-span-2">
-            <div className="space-y-2">
-              <Label htmlFor="prepTime">Prep Time (mins)</Label>
-              <Input
-                id="prepTime"
-                type="number"
-                placeholder="e.g., 15"
-                min="0"
-                value={prepTime}
-                onChange={(e) => setPrepTime(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cookTime">Cook Time (mins)</Label>
-              <Input
-                id="cookTime"
-                type="number"
-                placeholder="e.g., 30"
-                min="0"
-                value={cookTime}
-                onChange={(e) => setCookTime(e.target.value)}
-              />
-            </div>
-          </div>
+          {/* --- OCULTAR CAMPOS SI ES COMPONENTE --- */}
+          {!isComponent && (
+            <>
+              <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="prepTime">Prep Time (mins)</Label>
+                  <Input
+                    id="prepTime"
+                    type="number"
+                    placeholder="e.g., 15"
+                    min="0"
+                    value={prepTime}
+                    onChange={(e) => setPrepTime(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cookTime">Cook Time (mins)</Label>
+                  <Input
+                    id="cookTime"
+                    type="number"
+                    placeholder="e.g., 30"
+                    min="0"
+                    value={cookTime}
+                    onChange={(e) => setCookTime(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="servings">Servings</Label>
-            <Input
-              id="servings"
-              type="number"
-              placeholder="e.g., 4"
-              min="1"
-              value={servings}
-              onChange={(e) => setServings(e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="rating">Rating</Label>
-            <Select value={String(rating)} onValueChange={(v) => setRating(Number(v))}>
-              <SelectTrigger id="rating">
-                <SelectValue placeholder="Rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">No Rating</SelectItem>
-                <SelectItem value="1">1 Star</SelectItem>
-                <SelectItem value="2">2 Stars</SelectItem>
-                <SelectItem value="3">3 Stars</SelectItem>
-                <SelectItem value="4">4 Stars</SelectItem>
-                <SelectItem value="5">5 Stars</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="servings">Servings</Label>
+                <Input
+                  id="servings"
+                  type="number"
+                  placeholder="e.g., 4"
+                  min="1"
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="rating">Rating</Label>
+                <Select value={String(rating)} onValueChange={(v) => setRating(Number(v))}>
+                  <SelectTrigger id="rating">
+                    <SelectValue placeholder="Rating" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">No Rating</SelectItem>
+                    <SelectItem value="1">1 Star</SelectItem>
+                    <SelectItem value="2">2 Stars</SelectItem>
+                    <SelectItem value="3">3 Stars</SelectItem>
+                    <SelectItem value="4">4 Stars</SelectItem>
+                    <SelectItem value="5">5 Stars</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="flex items-center space-x-3 pt-6">
-             <Switch id="isFavorite" checked={isFavorite} onCheckedChange={setIsFavorite} />
-            <Label htmlFor="isFavorite" className="cursor-pointer">
-              Mark as Favorite
-            </Label>
-          </div>
+              <div className="flex items-center space-x-3 pt-6">
+                 <Switch id="isFavorite" checked={isFavorite} onCheckedChange={setIsFavorite} />
+                <Label htmlFor="isFavorite" className="cursor-pointer">
+                  Mark as Favorite
+                </Label>
+              </div>
+            </>
+          )}
+          {/* --------------------------------------- */}
 
         </CardContent>
       </Card>
