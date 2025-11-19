@@ -42,6 +42,7 @@ interface Cookbook {
   is_public: boolean
   cover_color: string | null
   cover_text: string | null
+  cover_url?: string | null
 }
 
 interface CookbookActionsProps {
@@ -150,7 +151,10 @@ export function CookbookActions({ cookbook }: CookbookActionsProps) {
             Edit
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        
+        {/* --- CORRECCIÓN APLICADA AQUÍ --- */}
+        {/* Añadido 'max-h-[85vh] overflow-y-auto' para permitir scroll si es muy alto */}
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Cookbook</DialogTitle>
           </DialogHeader>
