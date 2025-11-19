@@ -149,15 +149,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    /* --- CAMBIOS PARA MÓVIL --- */
     @apply bg-background text-foreground min-h-svh antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* ------------------------- */
   }
 }
-
-/* --- Animaciones de la Landing Page --- */
 
 @keyframes logo-intro-and-move {
   0% {
@@ -195,14 +191,10 @@
   z-index: 10;
 }
 
-/* --- CURSORES PERSONALIZADOS (VERSIÓN FINAL) --- */
-
-/* 1. Cursor normal (flecha) para toda la página */
 html, body {
   cursor: url('/cursor.png'), auto;
 }
 
-/* 2. Cursor de puntero (mano) para elementos clicables */
 a,
 button,
 label,
@@ -225,28 +217,23 @@ label,
   cursor: url('/pointer.png'), pointer;
 }
 
-/* 3. Forzar el cursor de texto al escribir */
 input,
 textarea,
 [role="textbox"] {
   cursor: text;
 }
 
-/* 4. (NUEVO) Ocultar los botones de flechas en los inputs de número */
-/* Ocultar para Chrome, Safari, Edge */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
   -webkit-appearance: none;
   margin: 0;
 }
-/* Ocultar para Firefox */
 input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* --- FIN DE CURSORES PERSONALIZADOS --- */
+/* --- NUEVOS ESTILOS DE COOKBOOK --- */
 
-/* --- Cookbook Card Styles --- */
 .cookbook-card {
   position: relative;
   transform-style: preserve-3d;
@@ -254,52 +241,87 @@ input[type=number] {
   background-color: transparent;
   border: none;
   box-shadow: none;
+  /* Añadimos perspectiva al contenedor */
+  perspective: 1000px; 
 }
 
 .cookbook-card:hover {
-  transform: rotateY(-15deg) scale(1.03);
+  /* Al hacer hover, el libro gira ligeramente y se acerca */
+  transform: rotateY(-25deg) rotateX(5deg) scale(1.02) translateX(10px);
 }
 
 .cookbook-cover {
   position: relative;
   z-index: 10;
   transform-origin: left center;
-  transition: transform 0.4s ease;
-  border-top-right-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  /* Hacemos la portada un poco más realista */
+  border-radius: 2px 6px 6px 2px;
+  box-shadow: 
+    -1px 0 2px rgba(0,0,0,0.1), /* Sombra sutil en el borde del lomo */
+    5px 5px 15px rgba(0,0,0,0.15); /* Sombra general */
 }
 
-.cookbook-card:hover .cookbook-cover {
-  transform: rotateY(-30deg);
+/* Simulación de las páginas del libro en el lado derecho */
+.cookbook-card::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  right: -12px; /* Grosor del libro */
+  width: 12px;
+  background: 
+    linear-gradient(to right, #fdfbf7 0%, #e8e5dd 100%), /* Color base papel */
+    repeating-linear-gradient(to bottom, #ccc 0px, #ccc 1px, transparent 1px, transparent 4px); /* Líneas de las páginas */
+  background-size: 100% 100%, 100% 6px;
+  transform: translateZ(-1px) rotateY(90deg); /* Posicionarlo como bloque */
+  transform-origin: left center;
+  z-index: 5;
+  border-radius: 0 3px 3px 0;
+  box-shadow: inset 2px 0 5px rgba(0,0,0,0.1);
 }
 
+/* Lomo del libro */
 .cookbook-spine {
   position: absolute;
   left: 0;
-  top: 2%;
-  height: 96%;
-  width: 28px; /* Ancho del lomo */
-  background: oklch(0.25 0.03 30); /* Color base del lomo */
-  transform: translateX(-100%) rotateY(90deg) translateX(50%);
+  top: 0;
+  height: 100%;
+  width: 30px; /* Ancho del lomo */
+  
+  /* Gradiente para simular la curvatura del lomo */
+  background: inherit; /* Hereda el color de fondo si se establece inline, o usa el gradiente abajo */
+  
+  transform: translateX(-100%) rotateY(90deg);
   transform-origin: right center;
-  border-radius: 4px 0 0 4px;
-  box-shadow: inset 5px 0 10px rgba(0,0,0,0.3);
+  
+  /* Diseño del lomo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
   color: white;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  padding: 0.5rem 0.25rem;
-  font-size: 0.75rem;
+  padding: 1rem 0;
+  
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  
+  /* Sombra interna para dar volumen */
+  box-shadow: inset -5px 0 10px rgba(0,0,0,0.2), inset 2px 0 5px rgba(255,255,255,0.1);
+  
   z-index: 5;
+  border-radius: 3px 0 0 3px;
 }
 
-.dark .cookbook-spine {
-   background: oklch(0.9 0.01 90);
-   color: oklch(0.145 0 0);
+/* Texto en el lomo */
+.cookbook-spine span {
+  display: block;
+  max-height: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

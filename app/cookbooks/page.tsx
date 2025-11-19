@@ -6,7 +6,6 @@ import { RecipeHeader } from "@/components/recipe-header"
 import { CookbookCard } from "@/components/CookbookCard"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { BookOpen } from "lucide-react"
-// --- IMPORTAR EL NUEVO COMPONENTE ---
 import { CreateCookbookButton } from "@/components/CreateCookbookButton" 
 
 export const dynamic = 'force-dynamic'
@@ -21,9 +20,10 @@ export default async function CookbooksPage() {
     redirect("/auth/login")
   }
 
+  // --- QUERY ACTUALIZADA: añadimos cover_url ---
   const { data: cookbooks, error } = await supabase
     .from("cookbooks")
-    .select("*, cover_color, cover_text, cookbook_recipes(count)")
+    .select("*, cover_color, cover_text, cover_url, cookbook_recipes(count)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -45,7 +45,6 @@ export default async function CookbooksPage() {
                 Your personal collections of recipes
               </p>
             </div>
-            {/* --- USAR EL NUEVO BOTÓN --- */}
             <CreateCookbookButton userId={user.id} />
           </div>
 
@@ -63,7 +62,7 @@ export default async function CookbooksPage() {
               </EmptyDescription>
             </Empty>
           ) : (
-            <div className="grid gap-6 md:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid gap-8 md:gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {cookbooks?.map((cookbook) => (
                 <CookbookCard
                   key={cookbook.id}
@@ -72,6 +71,7 @@ export default async function CookbooksPage() {
                   description={cookbook.description}
                   cover_color={cookbook.cover_color}
                   cover_text={cookbook.cover_text}
+                  cover_url={cookbook.cover_url} // Pasamos la URL
                   recipeCount={cookbook.cookbook_recipes[0]?.count || 0}
                   isPublic={cookbook.is_public}
                 />

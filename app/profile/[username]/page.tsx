@@ -11,19 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const dynamic = 'force-dynamic'
 
-interface Recipe {
-  id: string;
-  name: string;
-  ingredients: string[];
-  steps: string[];
-  image_url: string | null;
-  link: string | null;
-  category: string | null;
-  difficulty: string | null;
-  is_favorite: boolean;
-  rating: number | null;
-}
-
 export default async function PublicProfilePage({
   params,
 }: {
@@ -56,10 +43,10 @@ export default async function PublicProfilePage({
     console.error("Error fetching recipes:", recipesError)
   }
   
-  // --- QUERY ACTUALIZADA (para incluir cover_color y cover_text) ---
+  // --- QUERY ACTUALIZADA: añadimos cover_url ---
   const { data: cookbooks, error: cookbooksError } = await supabase
     .from("cookbooks")
-    .select("*, cover_color, cover_text, cookbook_recipes(count)") // Contar recetas
+    .select("*, cover_color, cover_text, cover_url, cookbook_recipes(count)")
     .eq("user_id", profile.id)
     .eq("is_public", true)
     .order("created_at", { ascending: false })
@@ -127,16 +114,16 @@ export default async function PublicProfilePage({
             
             <TabsContent value="cookbooks">
               {cookbooks && cookbooks.length > 0 ? (
-                <div className="grid gap-6 md:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid gap-8 md:gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {cookbooks.map((cookbook) => (
                     <PublicCookbookCard
                       key={cookbook.id}
                       id={cookbook.id}
                       name={cookbook.name}
                       description={cookbook.description}
-                      // --- PASAR LOS NUEVOS PROPS ---
                       cover_color={cookbook.cover_color}
                       cover_text={cookbook.cover_text}
+                      cover_url={cookbook.cover_url}
                       recipeCount={cookbook.cookbook_recipes[0]?.count || 0}
                       username={profile.username}
                     />

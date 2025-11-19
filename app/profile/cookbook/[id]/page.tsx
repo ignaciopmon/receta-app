@@ -4,7 +4,6 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { PublicRecipeCard } from "@/components/public-recipe-card"
-import { PublicCookbookCard } from "@/components/PublicCookbookCard"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -20,10 +19,10 @@ export default async function PublicCookbookPage({
   const { id } = await params
   const supabase = await createClient()
 
-  // 1. Obtener el cookbook (SIN el join de profiles que puede fallar)
+  // 1. Obtener el cookbook (Query actualizada con cover_url)
   const { data: cookbook, error: cookbookError } = await supabase
     .from("cookbooks")
-    .select("*, cover_color, cover_text") 
+    .select("*, cover_color, cover_text, cover_url") 
     .eq("id", id)
     .eq("is_public", true)
     .single()
@@ -32,22 +31,21 @@ export default async function PublicCookbookPage({
     notFound()
   }
 
-  // 2. Obtener el perfil del dueño del cookbook
-  const { data: profile, error: profileError } = await supabase
+  // 2. Obtener el perfil
+  const { data: profile } = await supabase
     .from("profiles")
     .select("username")
     .eq("id", cookbook.user_id)
     .single()
 
-  // Si no se encuentra el perfil, usamos 'Unknown' como fallback
   const username = profile?.username || "Unknown User"
 
-  // 3. Obtener las recetas PÚBLICAS de este cookbook
+  // 3. Obtener las recetas
   const { data: recipesData, error: recipesError } = await supabase
     .from("cookbook_recipes")
     .select("recipes(*)")
     .eq("cookbook_id", id)
-    .eq("recipes.is_public", true) // Solo recetas públicas
+    .eq("recipes.is_public", true)
     .is("recipes.deleted_at", null)
     .order("added_at", { ascending: false })
 
@@ -69,14 +67,17 @@ export default async function PublicCookbookPage({
             </Link>
           </Button>
 
-          <div className="mb-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">
+          <div className="mb-8 max-w-4xl mx-auto text-center">
+             {/* Cabecera simple del libro */}
+            <h1 className="text-3xl md:text-5xl font-serif font-bold mb-4 text-balance">
               {cookbook.name}
             </h1>
-            <p className="text-muted-foreground text-lg mb-2">
-              {cookbook.description || "A public cookbook"}
-            </p>
-            <div className="flex items-center gap-1.5 text-sm">
+            {cookbook.description && (
+                <p className="text-muted-foreground text-lg mb-4 max-w-2xl mx-auto">
+                {cookbook.description}
+                </p>
+            )}
+            <div className="flex items-center justify-center gap-1.5 text-sm">
               <User className="h-4 w-4" />
               <span>By <Link href={`/profile/${encodeURIComponent(username)}`} className="font-medium text-foreground hover:underline">@{username}</Link></span>
             </div>
