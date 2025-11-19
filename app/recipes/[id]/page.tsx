@@ -62,14 +62,12 @@ export default async function RecipeDetailPage({
     notFound()
   }
   
-  // --- FETCH SUB-RECETAS ---
   const { data: components } = await supabase
     .from("recipe_components")
     .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url, prep_time, cook_time)")
     .eq("parent_recipe_id", id)
   
   const subRecipes = components?.map((c: any) => c.recipes) || []
-  // -------------------------
 
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
 
@@ -99,6 +97,8 @@ export default async function RecipeDetailPage({
                 recipeId={recipe.id}
                 initialIsPublic={recipe.is_public}
                 link={recipe.link}
+                // --- PASAMOS EL FLAG ---
+                isComponent={recipe.is_component}
               />
             </div>
 
@@ -125,12 +125,14 @@ export default async function RecipeDetailPage({
                 </div>
               )}
 
-              <div className="flex items-center gap-1.5 text-sm">
-                <StarRating rating={recipe.rating} />
-              </div>
+              {/* Solo mostramos Rating si no es componente */}
+              {!recipe.is_component && (
+                 <div className="flex items-center gap-1.5 text-sm">
+                    <StarRating rating={recipe.rating} />
+                 </div>
+              )}
             </div>
 
-            {/* --- SECCIÓN DE SUB-RECETAS --- */}
             {subRecipes.length > 0 && (
               <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
@@ -153,9 +155,6 @@ export default async function RecipeDetailPage({
                           </div>
                           <div className="flex-1 min-w-0">
                              <p className="font-medium truncate group-hover:text-primary transition-colors">{sub.name}</p>
-                             <p className="text-xs text-muted-foreground">
-                                {(sub.prep_time || 0) + (sub.cook_time || 0) > 0 ? `${(sub.prep_time || 0) + (sub.cook_time || 0)} mins` : 'Sub-recipe'}
-                             </p>
                           </div>
                           <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                        </div>
@@ -164,7 +163,6 @@ export default async function RecipeDetailPage({
                 </CardContent>
               </Card>
             )}
-            {/* ------------------------------- */}
 
             <Card>
               <CardHeader>

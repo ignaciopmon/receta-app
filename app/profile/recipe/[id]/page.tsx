@@ -6,16 +6,10 @@ import { PublicHeader } from "@/components/public-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-// --- IMPORTAMOS LOS ICONOS NUEVOS ---
-import { ExternalLink, ArrowLeft, User, Clock, Users } from "lucide-react"
+import { ExternalLink, ArrowLeft, User, Clock, Users, Layers, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
-interface Profile {
-  username: string
-}
-
-// --- INTERFAZ ACTUALIZADA ---
 interface Recipe {
   id: string
   user_id: string
@@ -29,8 +23,8 @@ interface Recipe {
   prep_time: number | null
   cook_time: number | null
   servings: number | null
+  is_component: boolean
 }
-// ----------------------------
 
 export default async function PublicRecipePage({
   params,
@@ -40,15 +34,15 @@ export default async function PublicRecipePage({
   const { id } = await params
   const supabase = await createClient()
 
-  // --- QUERY ACTUALIZADA ---
+  // --- FETCH PRINCIPAL ---
+  // Nota: No filtramos por 'is_public=true' aquí. 
+  // Dejamos que la política RLS (014) decida si podemos verla (si es pública O componente de pública)
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
-    .select("id, user_id, name, ingredients, steps, image_url, link, category, difficulty, prep_time, cook_time, servings")
+    .select("*")
     .eq("id", id)
-    .eq("is_public", true)
     .is("deleted_at", null)
     .single()
-  // ------------------------
 
   if (recipeError || !recipe) {
     notFound()
@@ -60,13 +54,18 @@ export default async function PublicRecipePage({
     .eq("id", recipe.user_id)
     .single()
 
-  if (profileError || !profile) {
-    notFound()
-  }
+  const username = profile?.username || "Unknown"
 
-  // --- Lógica para el tiempo total ---
+  // --- FETCH SUB-RECETAS ---
+  // Usamos la relación para obtener datos de las sub-recetas
+  const { data: components } = await supabase
+    .from("recipe_components")
+    .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url)")
+    .eq("parent_recipe_id", id)
+  
+  const subRecipes = components?.map((c: any) => c.recipes) || []
+
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
-  // ----------------------------------
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -74,9 +73,9 @@ export default async function PublicRecipePage({
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto py-8 px-4 max-w-4xl">
           <Button asChild variant="ghost" className="mb-6 -ml-2">
-            <Link href={`/profile/${encodeURIComponent(profile.username)}`}>
+            <Link href={`/profile/${encodeURIComponent(username)}`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to @{profile.username}'s profile
+              Back to @{username}'s profile
             </Link>
           </Button>
 
@@ -109,11 +108,10 @@ export default async function PublicRecipePage({
               </div>
             </div>
 
-            {/* --- BLOQUE DE METADATOS ACTUALIZADO --- */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground">
               <div className="flex items-center gap-1.5 text-sm">
                 <User className="h-4 w-4" />
-                <span>Recipe by <Link href={`/profile/${encodeURIComponent(profile.username)}`} className="font-medium text-foreground hover:underline">@{profile.username}</Link></span>
+                <span>Recipe by <Link href={`/profile/${encodeURIComponent(username)}`} className="font-medium text-foreground hover:underline">@{username}</Link></span>
               </div>
               {recipe.category && <Badge variant="outline">{recipe.category}</Badge>}
               {recipe.difficulty && <Badge variant="secondary">{recipe.difficulty}</Badge>}
@@ -137,8 +135,40 @@ export default async function PublicRecipePage({
                 </div>
               )}
             </div>
-            {/* --- FIN DEL BLOQUE --- */}
 
+            {/* --- SECCIÓN SUB-RECETAS (PÚBLICA) --- */}
+            {subRecipes.length > 0 && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                     <Layers className="h-5 w-5 text-primary" />
+                     <CardTitle className="font-serif text-lg">Includes</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="grid gap-3 sm:grid-cols-2">
+                  {subRecipes.map((sub: any) => (
+                    <Link key={sub.id} href={`/profile/recipe/${sub.id}`}>
+                       <div className="flex items-center gap-3 p-2 rounded-md bg-background border hover:shadow-sm transition-all group">
+                          <div className="relative h-12 w-12 rounded overflow-hidden bg-muted shrink-0">
+                             <Image 
+                                src={sub.image_url || "/placeholder.svg"} 
+                                alt={sub.name} 
+                                fill 
+                                className="object-cover"
+                             />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                             <p className="font-medium truncate group-hover:text-primary transition-colors">{sub.name}</p>
+                             <p className="text-xs text-muted-foreground">Component</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                       </div>
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            {/* ------------------------------------- */}
 
             <Card>
               <CardHeader>

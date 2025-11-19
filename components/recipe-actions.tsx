@@ -9,16 +9,17 @@ import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { PenSquare, ExternalLink, Share2, Globe, XCircle, Loader2 } from "lucide-react"
-// --- 1. IMPORTAR EL NUEVO COMPONENTE ---
 import { AddRecipeToCookbook } from "@/components/AddRecipeToCookbook"
 
 interface RecipeActionsProps {
   recipeId: string
   initialIsPublic: boolean
   link: string | null
+  // --- NUEVO PROP ---
+  isComponent?: boolean
 }
 
-export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActionsProps) {
+export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: RecipeActionsProps) {
   const router = useRouter()
   const supabase = createClient()
   const { toast } = useToast()
@@ -81,42 +82,45 @@ export function RecipeActions({ recipeId, initialIsPublic, link }: RecipeActions
   return (
     <div className="flex gap-3 flex-shrink-0">
       
-      {/* --- 2. AÑADIR EL NUEVO BOTÓN/POPOVER --- */}
+      {/* Botón para añadir a Cookbook (siempre visible) */}
       <AddRecipeToCookbook recipeId={recipeId} />
-      {/* ------------------------------------- */}
       
-      {/* --- Lógica de Botón Condicional --- */}
-      {isPublic ? (
+      {/* --- BOTONES DE PUBLICACIÓN: OCULTOS SI ES COMPONENTE --- */}
+      {!isComponent && (
         <>
-          <Button onClick={handleUnpublish} disabled={isLoading} variant="outline" className="hidden md:inline-flex">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
-            Unpublish
-          </Button>
-          <Button onClick={handleUnpublish} disabled={isLoading} variant="outline" size="icon" className="md:hidden">
-            <XCircle className="h-4 w-4" />
-          </Button>
+          {isPublic ? (
+            <>
+              <Button onClick={handleUnpublish} disabled={isLoading} variant="outline" className="hidden md:inline-flex">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                Unpublish
+              </Button>
+              <Button onClick={handleUnpublish} disabled={isLoading} variant="outline" size="icon" className="md:hidden">
+                <XCircle className="h-4 w-4" />
+              </Button>
 
-          <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-            Copy Link
-          </Button>
-           <Button onClick={handleShare} disabled={isLoading} size="icon" className="md:hidden">
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
-            Publish & Share
-          </Button>
-          <Button onClick={handleShare} disabled={isLoading} size="icon" className="md:hidden">
-            <Globe className="h-4 w-4" />
-          </Button>
+              <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                Copy Link
+              </Button>
+              <Button onClick={handleShare} disabled={isLoading} size="icon" className="md:hidden">
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
+                Publish & Share
+              </Button>
+              <Button onClick={handleShare} disabled={isLoading} size="icon" className="md:hidden">
+                <Globe className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </>
       )}
+      {/* ------------------------------------------------------ */}
 
-      {/* --- Botones de Editar y Fuente (como antes) --- */}
       <Button asChild variant="outline" size="icon" className="md:hidden">
         <Link href={`/recipes/edit/${recipeId}`}>
           <PenSquare className="h-4 w-4" />

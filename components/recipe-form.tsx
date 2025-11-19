@@ -90,7 +90,6 @@ export function RecipeForm({
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initialImageUrl)
   
-  // Ajustamos la categoría inicial si cambiamos de tipo de receta
   const [category, setCategory] = useState(initialCategory || "lunch")
   const [difficulty, setDifficulty] = useState(initialDifficulty || "easy")
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
@@ -108,21 +107,17 @@ export function RecipeForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // --- EFECTO: Resetear categoría al cambiar tipo de receta ---
   useEffect(() => {
     if (isComponent) {
-      // Si cambiamos a componente, ponemos una por defecto de componentes si la actual no lo es
-      if (!["sauce", "glaze", "cream", "filling", "dough", "topping", "other_component"].includes(category)) {
+      if (!["sauce", "glaze", "cream", "filling", "dough", "topping", "seasoning", "other_component"].includes(category)) {
         setCategory("sauce")
       }
     } else {
-       // Si volvemos a receta normal, ponemos una normal por defecto
-       if (["sauce", "glaze", "cream", "filling", "dough", "topping", "other_component"].includes(category)) {
+       if (["sauce", "glaze", "cream", "filling", "dough", "topping", "seasoning", "other_component"].includes(category)) {
         setCategory("lunch")
        }
     }
   }, [isComponent])
-  // ---------------------------------------------------------
 
   useEffect(() => {
     if (isEditing && recipeId) {
@@ -254,8 +249,6 @@ export function RecipeForm({
         imageUrl = blob.url
       }
       
-      // --- LÓGICA DE GUARDADO CONDICIONAL ---
-      // Si es componente, forzamos null/false en los campos que no aplican
       const recipeData = {
         name: name.trim(),
         ingredients: filteredIngredients,
@@ -264,17 +257,14 @@ export function RecipeForm({
         link: link.trim() || null,
         category,
         difficulty,
-        // Campos ocultos en componentes:
         is_favorite: isComponent ? false : isFavorite,
         rating: isComponent ? null : rating,
         prep_time: isComponent ? null : (prepTime ? parseInt(prepTime, 10) : null),
         cook_time: isComponent ? null : (cookTime ? parseInt(cookTime, 10) : null),
         servings: isComponent ? null : (servings ? parseInt(servings, 10) : null),
-        
         is_component: isComponent,
         user_id: user.id,
       }
-      // -------------------------------------
 
       let finalRecipeId = recipeId
 
@@ -453,16 +443,16 @@ export function RecipeForm({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                {/* --- CATEGORÍAS DINÁMICAS --- */}
+                {/* --- INGLÉS ONLY --- */}
                 {isComponent ? (
                   <>
-                    <SelectItem value="sauce">Sauce / Salsa</SelectItem>
-                    <SelectItem value="glaze">Glaze / Glaseado</SelectItem>
-                    <SelectItem value="cream">Cream / Crema</SelectItem>
-                    <SelectItem value="filling">Filling / Relleno</SelectItem>
-                    <SelectItem value="dough">Dough / Masa</SelectItem>
-                    <SelectItem value="topping">Topping / Cobertura</SelectItem>
-                    <SelectItem value="seasoning">Seasoning / Sazón</SelectItem>
+                    <SelectItem value="sauce">Sauce</SelectItem>
+                    <SelectItem value="glaze">Glaze</SelectItem>
+                    <SelectItem value="cream">Cream</SelectItem>
+                    <SelectItem value="filling">Filling</SelectItem>
+                    <SelectItem value="dough">Dough</SelectItem>
+                    <SelectItem value="topping">Topping</SelectItem>
+                    <SelectItem value="seasoning">Seasoning</SelectItem>
                     <SelectItem value="other_component">Other Component</SelectItem>
                   </>
                 ) : (
@@ -475,7 +465,6 @@ export function RecipeForm({
                     <SelectItem value="beverage">Beverage</SelectItem>
                   </>
                 )}
-                {/* ------------------------- */}
               </SelectContent>
             </Select>
           </div>
@@ -494,7 +483,6 @@ export function RecipeForm({
             </Select>
           </div>
           
-          {/* --- OCULTAR CAMPOS SI ES COMPONENTE --- */}
           {!isComponent && (
             <>
               <div className="grid grid-cols-2 gap-4 md:col-span-2">
@@ -559,7 +547,6 @@ export function RecipeForm({
               </div>
             </>
           )}
-          {/* --------------------------------------- */}
 
         </CardContent>
       </Card>
