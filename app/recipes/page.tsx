@@ -1,5 +1,3 @@
-// app/recipes/page.tsx
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -90,14 +88,12 @@ export default function RecipesPage() {
       
       checkWelcomeModal(user.id)
 
-      // --- VERSIÓN SEGURA ---
-      // Hemos quitado el filtro .eq("is_component", false) para asegurar que carga todo
-      // sin importar el estado de esa columna.
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select("*")
         .eq("user_id", user.id)
         .is("deleted_at", null)
+        .eq("is_component", false) // <--- FILTRO ACTIVADO: Oculta las sub-recetas
         .order("created_at", { ascending: false })
 
       if (fetchError) {

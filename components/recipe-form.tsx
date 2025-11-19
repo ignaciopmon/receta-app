@@ -443,7 +443,6 @@ export function RecipeForm({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                {/* --- INGLÉS ONLY --- */}
                 {isComponent ? (
                   <>
                     <SelectItem value="sauce">Sauce</SelectItem>
