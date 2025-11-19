@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { PublicRecipeCard } from "@/components/public-recipe-card"
+import { PublicCookbookCard } from "@/components/PublicCookbookCard"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -14,17 +15,15 @@ export const dynamic = 'force-dynamic'
 export default async function PublicCookbookPage({
   params,
 }: {
-  // --- LA CORRECCIÓN ESTÁ AQUÍ ---
   params: Promise<{ id: string }>
 }) {
-  // --- Y AQUÍ ---
-  const { id } = await params // Se usa 'await' para obtener el id
+  const { id } = await params
   const supabase = await createClient()
 
-  // 1. Obtener el cookbook y verificar que es público
+  // 1. Obtener el cookbook (SIN el join de profiles que puede fallar)
   const { data: cookbook, error: cookbookError } = await supabase
     .from("cookbooks")
-    .select("*, profiles(username), cover_color, cover_text") // Añadimos campos de portada
+    .select("*, cover_color, cover_text") 
     .eq("id", id)
     .eq("is_public", true)
     .single()
@@ -33,7 +32,17 @@ export default async function PublicCookbookPage({
     notFound()
   }
 
-  // 2. Obtener las recetas PÚBLICAS de este cookbook
+  // 2. Obtener el perfil del dueño del cookbook
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", cookbook.user_id)
+    .single()
+
+  // Si no se encuentra el perfil, usamos 'Unknown' como fallback
+  const username = profile?.username || "Unknown User"
+
+  // 3. Obtener las recetas PÚBLICAS de este cookbook
   const { data: recipesData, error: recipesError } = await supabase
     .from("cookbook_recipes")
     .select("recipes(*)")
@@ -47,7 +56,6 @@ export default async function PublicCookbookPage({
   }
 
   const recipes = recipesData?.map(item => item.recipes).filter(Boolean) || []
-  const username = cookbook.profiles.username
 
   return (
     <div className="flex min-h-screen w-full flex-col">

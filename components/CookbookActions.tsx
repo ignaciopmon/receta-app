@@ -26,11 +26,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import {
-  // --- 'Wand2' y 'Loader2' de IA eliminados ---
   PenSquare,
   Archive,
-  Loader2, // Loader2 se sigue usando para borrar
+  Loader2,
   Share2,
+  Globe,
+  Lock
 } from "lucide-react"
 import { EditCookbookForm } from "./EditCookbookForm"
 
@@ -39,7 +40,6 @@ interface Cookbook {
   name: string
   description: string | null
   is_public: boolean
-  // --- CAMPOS NUEVOS ---
   cover_color: string | null
   cover_text: string | null
 }
@@ -51,17 +51,17 @@ interface CookbookActionsProps {
 export function CookbookActions({ cookbook }: CookbookActionsProps) {
   const router = useRouter()
   const { toast } = useToast()
-  // --- 'isGenerating' eliminado ---
+  const supabase = createClient()
+  
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  // Estado para el toggle de visibilidad
+  const [isTogglingVisibility, setIsTogglingVisibility] = useState(false)
   
   const publicUrl = `${window.location.origin}/profile/cookbook/${cookbook.id}`
 
-  // --- FUNCIÓN handleGenerateCover ELIMINADA ---
-
   const handleDelete = async () => {
     setIsDeleting(true)
-    const supabase = createClient()
     try {
       const { error } = await supabase
         .from("cookbooks")
@@ -74,7 +74,7 @@ export function CookbookActions({ cookbook }: CookbookActionsProps) {
         title: "Cookbook Deleted",
         description: `"${cookbook.name}" has been permanently deleted.`,
       })
-      router.push("/cookbooks") // Redirigir a la biblioteca
+      router.push("/cookbooks") 
     } catch (error) {
       toast({
         title: "Error",
@@ -94,8 +94,54 @@ export function CookbookActions({ cookbook }: CookbookActionsProps) {
     })
   }
 
+  const handleToggleVisibility = async () => {
+    setIsTogglingVisibility(true)
+    const newValue = !cookbook.is_public
+    
+    try {
+       const { error } = await supabase
+        .from("cookbooks")
+        .update({ is_public: newValue })
+        .eq("id", cookbook.id)
+
+      if (error) throw error
+
+      toast({
+        title: newValue ? "Cookbook Published" : "Cookbook Made Private",
+        description: newValue 
+          ? "Anyone with the link can now view this cookbook." 
+          : "This cookbook is now only visible to you.",
+      })
+      router.refresh()
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Failed to update cookbook visibility.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsTogglingVisibility(false)
+    }
+  }
+
   return (
     <div className="flex flex-col sm:flex-row gap-3">
+      {/* Botón de Publicar/Privatizar */}
+      <Button 
+        variant="outline" 
+        onClick={handleToggleVisibility} 
+        disabled={isTogglingVisibility}
+      >
+        {isTogglingVisibility ? (
+           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : cookbook.is_public ? (
+           <Lock className="mr-2 h-4 w-4" />
+        ) : (
+           <Globe className="mr-2 h-4 w-4" />
+        )}
+        {cookbook.is_public ? "Make Private" : "Publish"}
+      </Button>
+
       {/* Botón de Editar (con Dialog) */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogTrigger asChild>
@@ -115,13 +161,11 @@ export function CookbookActions({ cookbook }: CookbookActionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* --- BOTÓN DE IA ELIMINADO --- */}
-
       {/* Botón de Compartir (si es público) */}
       {cookbook.is_public && (
         <Button onClick={handleCopyLink}>
           <Share2 className="mr-2 h-4 w-4" />
-          Copy Public Link
+          Copy Link
         </Button>
       )}
 
@@ -138,8 +182,7 @@ export function CookbookActions({ cookbook }: CookbookActionsProps) {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the cookbook "{cookbook.name}" and all
-              its recipe links (it will not delete the recipes themselves). This
-              action cannot be undone.
+              its recipe links (it will not delete the recipes themselves).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

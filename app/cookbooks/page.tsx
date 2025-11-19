@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server"
 import { RecipeHeader } from "@/components/recipe-header"
 import { CookbookCard } from "@/components/CookbookCard"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import { BookPlus, BookOpen } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { BookOpen } from "lucide-react"
+// --- IMPORTAR EL NUEVO COMPONENTE ---
+import { CreateCookbookButton } from "@/components/CreateCookbookButton" 
 
 export const dynamic = 'force-dynamic'
 
@@ -21,8 +21,6 @@ export default async function CookbooksPage() {
     redirect("/auth/login")
   }
 
-  // 1. Obtener todos los cookbooks del usuario
-  // --- QUERY ACTUALIZADA (para incluir cover_color y cover_text) ---
   const { data: cookbooks, error } = await supabase
     .from("cookbooks")
     .select("*, cover_color, cover_text, cookbook_recipes(count)")
@@ -47,11 +45,8 @@ export default async function CookbooksPage() {
                 Your personal collections of recipes
               </p>
             </div>
-            {/* TODO: Link to a new page /cookbooks/new */}
-            <Button size="lg" disabled> 
-              <BookPlus className="mr-2 h-5 w-5" />
-              New Cookbook
-            </Button>
+            {/* --- USAR EL NUEVO BOTÓN --- */}
+            <CreateCookbookButton userId={user.id} />
           </div>
 
           {(cookbooks?.length || 0) === 0 ? (
@@ -75,7 +70,6 @@ export default async function CookbooksPage() {
                   id={cookbook.id}
                   name={cookbook.name}
                   description={cookbook.description}
-                  // --- PASAR LOS NUEVOS PROPS ---
                   cover_color={cookbook.cover_color}
                   cover_text={cookbook.cover_text}
                   recipeCount={cookbook.cookbook_recipes[0]?.count || 0}
