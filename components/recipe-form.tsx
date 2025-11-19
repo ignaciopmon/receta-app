@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Plus, X, Loader2, CookingPot, Layers, Check } from "lucide-react" 
+import { Plus, X, Loader2, CookingPot, Layers, Check, GripVertical } from "lucide-react" 
 import { upload } from "@vercel/blob/client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -26,6 +26,26 @@ import {
 } from "@/components/ui/command"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
+
+// --- DND KIT IMPORTS ---
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 interface RecipeFormProps {
   recipeId?: string
@@ -49,6 +69,105 @@ interface RecipeFormProps {
 interface SimpleRecipe {
   id: string
   name: string
+}
+
+// Tipo para nuestros items arrastrables
+interface FormItem {
+  id: string
+  value: string
+}
+
+// Helper para IDs únicos
+const generateId = () => Math.random().toString(36).substr(2, 9)
+
+// --- COMPONENTE FILA ARRASTRABLE ---
+function SortableRow({ 
+  id, 
+  value, 
+  onChange, 
+  onRemove, 
+  placeholder, 
+  isTextArea = false,
+  index,
+  canRemove 
+}: {
+  id: string
+  value: string
+  onChange: (val: string) => void
+  onRemove: () => void
+  placeholder: string
+  isTextArea?: boolean
+  index?: number
+  canRemove: boolean
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    position: 'relative' as 'relative',
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn("flex gap-2 items-start group", isDragging && "opacity-50")}>
+      {/* Botón de arrastre (Handle) */}
+      <button
+        type="button"
+        className={cn(
+          "mt-2.5 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground transition-colors outline-none focus-visible:ring-2 ring-ring rounded-sm",
+          isTextArea && "mt-3"
+        )}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-5 w-5" />
+      </button>
+
+      <div className="flex-1">
+        {isTextArea ? (
+          <div className="flex gap-2">
+             {/* Badge numérico para pasos */}
+             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">
+                {(index ?? 0) + 1}
+             </div>
+             <Textarea
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                rows={2}
+                className="flex-1"
+              />
+          </div>
+        ) : (
+          <Input
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        )}
+      </div>
+
+      {canRemove && (
+        <Button 
+          type="button" 
+          variant="ghost" 
+          size="icon" 
+          onClick={onRemove}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  )
 }
 
 export function RecipeForm({
@@ -75,16 +194,21 @@ export function RecipeForm({
 
   const [name, setName] = useState(initialName)
   
-  const [ingredients, setIngredients] = useState<string[]>(
-    (initialIngredients && initialIngredients.length > 0)
+  // --- ESTADO REFACTORIZADO PARA DND (Objetos con ID) ---
+  const [ingredients, setIngredients] = useState<FormItem[]>(() => {
+    const base = (initialIngredients && initialIngredients.length > 0)
       ? initialIngredients
-      : Array(defaultIngredientsCount).fill(""),
-  )
-  const [steps, setSteps] = useState<string[]>(
-    (initialSteps && initialSteps.length > 0)
+      : Array(defaultIngredientsCount).fill("")
+    return base.map(val => ({ id: generateId(), value: val }))
+  })
+
+  const [steps, setSteps] = useState<FormItem[]>(() => {
+    const base = (initialSteps && initialSteps.length > 0)
       ? initialSteps
-      : Array(defaultStepsCount).fill(""),
-  )
+      : Array(defaultStepsCount).fill("")
+    return base.map(val => ({ id: generateId(), value: val }))
+  })
+  // ------------------------------------------------------
 
   const [link, setLink] = useState(initialLink || "")
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -106,6 +230,42 @@ export function RecipeForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // --- CONFIGURACIÓN SENSORES DND ---
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Esperar 8px de movimiento antes de arrastrar (permite clicks)
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // --- MANEJADORES DE ARRASTRE ---
+  function handleDragEndIngredients(event: DragEndEvent) {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setIngredients((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
+
+  function handleDragEndSteps(event: DragEndEvent) {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setSteps((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
+  // ------------------------------
 
   useEffect(() => {
     if (isComponent) {
@@ -158,37 +318,39 @@ export function RecipeForm({
     }
   }
 
+  // --- MANEJADORES DE ITEMS ACTUALIZADOS ---
   const addIngredient = () => {
-    setIngredients([...ingredients, ""])
+    setIngredients([...ingredients, { id: generateId(), value: "" }])
   }
 
-  const removeIngredient = (index: number) => {
+  const removeIngredient = (id: string) => {
     if (ingredients.length > 1) {
-      setIngredients(ingredients.filter((_, i) => i !== index))
+      setIngredients(ingredients.filter((i) => i.id !== id))
     }
   }
 
-  const updateIngredient = (index: number, value: string) => {
-    const newIngredients = [...ingredients]
-    newIngredients[index] = value
-    setIngredients(newIngredients)
+  const updateIngredient = (id: string, newValue: string) => {
+    setIngredients(ingredients.map(item => 
+      item.id === id ? { ...item, value: newValue } : item
+    ))
   }
 
   const addStep = () => {
-    setSteps([...steps, ""])
+    setSteps([...steps, { id: generateId(), value: "" }])
   }
 
-  const removeStep = (index: number) => {
+  const removeStep = (id: string) => {
     if (steps.length > 1) {
-      setSteps(steps.filter((_, i) => i !== index))
+      setSteps(steps.filter((s) => s.id !== id))
     }
   }
 
-  const updateStep = (index: number, value: string) => {
-    const newSteps = [...steps]
-    newSteps[index] = value
-    setSteps(newSteps)
+  const updateStep = (id: string, newValue: string) => {
+    setSteps(steps.map(item => 
+      item.id === id ? { ...item, value: newValue } : item
+    ))
   }
+  // ----------------------------------------
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -219,8 +381,9 @@ export function RecipeForm({
     setError(null)
 
     try {
-      const filteredIngredients = ingredients.filter((i) => i.trim() !== "")
-      const filteredSteps = steps.filter((s) => s.trim() !== "")
+      // Extraer valores de los objetos para el guardado
+      const filteredIngredients = ingredients.map(i => i.value).filter((i) => i.trim() !== "")
+      const filteredSteps = steps.map(s => s.value).filter((s) => s.trim() !== "")
 
       if (!name.trim()) {
         throw new Error("Recipe name is required")
@@ -550,6 +713,7 @@ export function RecipeForm({
         </CardContent>
       </Card>
 
+      {/* --- SECCIÓN INGREDIENTES CON DRAG & DROP --- */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -561,25 +725,29 @@ export function RecipeForm({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {ingredients.map((ingredient, index) => (
-            <div key={index} className="flex gap-2">
-              <div className="flex-1">
-                <Input
-                  placeholder={`Ingredient ${index + 1}`}
-                  value={ingredient}
-                  onChange={(e) => updateIngredient(index, e.target.value)}
+          <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEndIngredients}
+          >
+            <SortableContext items={ingredients} strategy={verticalListSortingStrategy}>
+              {ingredients.map((ingredient) => (
+                <SortableRow
+                  key={ingredient.id}
+                  id={ingredient.id}
+                  value={ingredient.value}
+                  onChange={(val) => updateIngredient(ingredient.id, val)}
+                  onRemove={() => removeIngredient(ingredient.id)}
+                  placeholder="e.g. 2 cups flour"
+                  canRemove={ingredients.length > 1}
                 />
-              </div>
-              {ingredients.length > 1 && (
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeIngredient(index)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          ))}
+              ))}
+            </SortableContext>
+          </DndContext>
         </CardContent>
       </Card>
 
+      {/* --- SECCIÓN PASOS CON DRAG & DROP --- */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -591,26 +759,27 @@ export function RecipeForm({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {steps.map((step, index) => (
-            <div key={index} className="flex gap-2">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-                {index + 1}
-              </div>
-              <div className="flex-1">
-                <Textarea
+          <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEndSteps}
+          >
+            <SortableContext items={steps} strategy={verticalListSortingStrategy}>
+              {steps.map((step, index) => (
+                <SortableRow
+                  key={step.id}
+                  id={step.id}
+                  value={step.value}
+                  onChange={(val) => updateStep(step.id, val)}
+                  onRemove={() => removeStep(step.id)}
                   placeholder={`Step ${index + 1}`}
-                  value={step}
-                  onChange={(e) => updateStep(index, e.target.value)}
-                  rows={2}
+                  canRemove={steps.length > 1}
+                  isTextArea
+                  index={index}
                 />
-              </div>
-              {steps.length > 1 && (
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeStep(index)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          ))}
+              ))}
+            </SortableContext>
+          </DndContext>
         </CardContent>
       </Card>
 
