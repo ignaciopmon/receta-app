@@ -1,5 +1,3 @@
-// components/CreateCookbookButton.tsx
-
 "use client"
 
 import { useState } from "react"
@@ -36,7 +34,6 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   
   const [isLoading, setIsLoading] = useState(false)
-  const [loadingMessage, setLoadingMessage] = useState("") // Estado para mensajes de carga
   
   const router = useRouter()
   const { toast } = useToast()
@@ -67,9 +64,8 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
     try {
       let coverUrl = null
       
-      // 1. Si el usuario subió su propia imagen, la usamos (Prioridad máxima)
+      // 1. Si el usuario subió su propia imagen, la usamos
       if (imageFile) {
-        setLoadingMessage("Uploading your cover...")
         const blob = await upload(imageFile.name, imageFile, {
           access: "public",
           handleUploadUrl: "/api/upload",
@@ -79,34 +75,8 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
         })
         coverUrl = blob.url
       } 
-      // 2. Si NO hay imagen, intentamos generarla con IA (Magia oculta)
-      else {
-        setLoadingMessage("Designing cover...") // Mensaje sutil para el usuario
-        try {
-          const aiResponse = await fetch("/api/generate-cover", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              title: name.trim(), 
-              description: description.trim() 
-            }),
-          });
 
-          if (aiResponse.ok) {
-            const aiData = await aiResponse.json();
-            coverUrl = aiData.url;
-          } else {
-            console.warn("AI Cover generation failed, creating without cover.");
-          }
-        } catch (aiError) {
-          console.error("AI generation error:", aiError);
-          // No bloqueamos la creación si la IA falla, simplemente se crea sin portada
-        }
-      }
-
-      setLoadingMessage("Saving cookbook...")
-
-      // 3. Guardar en base de datos
+      // 2. Guardar en base de datos
       const { data, error } = await supabase
         .from("cookbooks")
         .insert({
@@ -114,7 +84,7 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
           description: description.trim() || null,
           user_id: userId,
           is_public: false,
-          cover_url: coverUrl, // Aquí va la URL (ya sea subida o generada por IA)
+          cover_url: coverUrl, 
           cover_text: name.trim(),
           cover_color: "#444444"
         })
@@ -143,7 +113,6 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
       })
     } finally {
       setIsLoading(false)
-      setLoadingMessage("")
     }
   }
 
@@ -215,7 +184,7 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                If you don't upload one, we'll create a unique cover for you using AI ✨
+                You can upload an image or stick with the default text cover.
               </p>
             </div>
           </div>
@@ -223,16 +192,11 @@ export function CreateCookbookButton({ userId }: CreateCookbookButtonProps) {
           <DialogFooter>
             <Button type="submit" disabled={isLoading || !name.trim()}>
               {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {loadingMessage || "Creating..."}
-                </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Cookbook
-                </>
+                <Plus className="mr-2 h-4 w-4" />
               )}
+              Create Cookbook
             </Button>
           </DialogFooter>
         </form>
