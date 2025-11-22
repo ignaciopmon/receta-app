@@ -97,7 +97,7 @@ export function PublicRecipeCard({
             <h3 className="font-serif text-xl font-bold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors mb-1">
               {name}
             </h3>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
                <StarRating rating={rating} />
                <div className="flex gap-2">
                   {category && (
@@ -105,11 +105,17 @@ export function PublicRecipeCard({
                       {category}
                     </Badge>
                   )}
+                  {/* AÑADIDO: Dificultad */}
+                  {difficulty && (
+                    <Badge variant="outline" className="font-normal text-[10px] px-1.5 py-0 border-border/60 text-muted-foreground uppercase tracking-wide">
+                      {difficulty}
+                    </Badge>
+                  )}
                </div>
             </div>
           </div>
 
-          {/* Grid de Estadísticas (Elegante) */}
+          {/* Grid de Estadísticas */}
           <div className="grid grid-cols-2 gap-3 mb-4 py-3 border-y border-border/40 bg-secondary/10 -mx-1 px-1 rounded-sm">
              <div className="flex flex-col items-center justify-center gap-0.5 border-r border-border/40">
                 <span className="text-lg font-bold text-foreground">{ingredients.length}</span>
@@ -135,18 +141,22 @@ export function PublicRecipeCard({
           </div>
         </div>
 
-        {/* Footer para enlace externo (si existe) */}
-        {link && (
-          <div className="p-4 pt-0 mt-auto flex justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <Button asChild variant="ghost" size="sm" className="h-8 px-2 hover:bg-primary/5 hover:text-primary" onClick={(e) => e.stopPropagation()}>
-              <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
-                <span className="text-xs font-medium">Source</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </Button>
+        {/* Footer fijo - Sin cambios de layout */}
+        {link ? (
+          <div className="p-4 pt-0 mt-auto h-12 flex items-end justify-end">
+            <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+              <Button asChild variant="ghost" size="sm" className="h-8 px-2 hover:bg-primary/5 hover:text-primary" onClick={(e) => e.stopPropagation()}>
+                <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium">Source</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            </div>
           </div>
+        ) : (
+          // Espaciador del mismo tamaño para consistencia si no hay link
+          <div className="h-2"></div>
         )}
-        {!link && <div className="h-2"></div>}
       </Card>
     </Link>
   )

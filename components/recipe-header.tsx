@@ -8,7 +8,6 @@ import Link from "next/link"
 
 export function RecipeHeader() {
   return (
-    // Cambiamos 'border-b bg-background' por 'sticky' y efectos de vidrio
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/recipes" className="flex items-center gap-2 group">
@@ -33,8 +32,8 @@ export function RecipeHeader() {
             </Link>
           </Button>
 
-          {/* Botón principal con un estilo más sólido */}
-          <Button asChild size="sm" className="shadow-sm">
+          {/* Eliminada la clase 'shadow-sm' para que no se vea 'levantado' */}
+          <Button asChild size="sm">
             <Link href="/recipes/new">
               <NotebookPen className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Add Recipe</span>

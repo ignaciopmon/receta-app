@@ -169,7 +169,7 @@ export function RecipeCard({
             <h3 className="font-serif text-xl font-bold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors mb-1">
               {name}
             </h3>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
                <StarRating rating={rating} />
                <div className="flex gap-2">
                   {category && (
@@ -177,11 +177,17 @@ export function RecipeCard({
                       {category}
                     </Badge>
                   )}
+                  {/* Dificultad también aquí para consistencia */}
+                  {difficulty && (
+                    <Badge variant="outline" className="font-normal text-[10px] px-1.5 py-0 border-border/60 text-muted-foreground uppercase tracking-wide">
+                      {difficulty}
+                    </Badge>
+                  )}
                </div>
             </div>
           </div>
 
-          {/* Stats Grid - Mismo estilo que la pública */}
+          {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3 mb-4 py-3 border-y border-border/40 bg-secondary/10 -mx-1 px-1 rounded-sm">
              <div className="flex flex-col items-center justify-center gap-0.5 border-r border-border/40">
                 <span className="text-lg font-bold text-foreground">{ingredients.length}</span>
@@ -206,37 +212,38 @@ export function RecipeCard({
           </div>
         </div>
 
-        {/* Footer de acciones - Minimalista */}
-        <div className="p-4 pt-0 mt-auto flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-          <div className="flex gap-1">
-            <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
-              <Link href={`/recipes/edit/${id}`}>
-                <PenSquare className="h-4 w-4" />
-              </Link>
-            </Button>
-            
-            {link && (
+        {/* Footer de acciones - Fijo para evitar saltos */}
+        <div className="p-4 pt-0 mt-auto h-12 flex items-end justify-between gap-2">
+          {/* Contenedor con opacidad variable, pero ocupando espacio */}
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0 w-full justify-between">
+            <div className="flex gap-1">
               <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
-                <a href={link} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                <Link href={`/recipes/edit/${id}`}>
+                  <PenSquare className="h-4 w-4" />
+                </Link>
               </Button>
-            )}
-          </div>
+              
+              {link && (
+                <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
+                  <a href={link} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
 
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
-            onClick={handleDelete} 
-            disabled={isDeleting}
-          >
-            <Archive className="h-4 w-4" />
-          </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
+              onClick={handleDelete} 
+              disabled={isDeleting}
+            >
+              <Archive className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         
-        {/* Espaciador */}
-        <div className="h-4 block group-hover:hidden"></div>
       </Card>
     </Link>
   )
