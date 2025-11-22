@@ -302,10 +302,16 @@ export function RecipeForm({
   }
 
   const fetchAvailableComponents = async () => {
+    // 1. Obtener usuario actual para filtrar
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // 2. Consulta filtrando por user_id
     let query = supabase
       .from("recipes")
       .select("id, name")
       .eq("is_component", true)
+      .eq("user_id", user.id) // <--- ESTO SOLUCIONA EL PROBLEMA
       .is("deleted_at", null)
     
     if (recipeId) {

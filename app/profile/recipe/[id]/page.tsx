@@ -4,26 +4,63 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, ArrowLeft, User, Clock, Users, Layers, ArrowRight } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
+import { ExternalLink, ArrowLeft, User, Clock, Users, Star, Layers, Utensils, Flame, ChefHat } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
-interface Recipe {
-  id: string
-  user_id: string
-  name: string
-  ingredients: string[]
-  steps: string[]
-  image_url: string | null
-  link: string | null
-  category: string | null
-  difficulty: string | null
-  prep_time: number | null
-  cook_time: number | null
-  servings: number | null
-  is_component: boolean
+// --- Componentes Auxiliares (Reutilizados para consistencia) ---
+
+function StarRating({ rating }: { rating: number | null }) {
+  if (rating === null || rating === 0) {
+    return (
+      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50">
+        <Star className="h-3 w-3" />
+        <span className="text-[10px] font-medium uppercase tracking-wider">No Rating</span>
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-100/50 text-yellow-700 border border-yellow-200/50 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900/30">
+      <Star className="h-3 w-3 fill-current" />
+      <span className="text-xs font-bold">{rating}</span>
+      <span className="text-[10px] opacity-70">/ 5</span>
+    </div>
+  )
+}
+
+function MetaItem({ icon: Icon, label, value }: { icon: any, label: string, value: string | number | null }) {
+  if (!value) return null
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-2 min-w-[80px] border-r border-border/50 last:border-0">
+      <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+        <Icon className="h-3.5 w-3.5" />
+        <span className="text-[10px] uppercase tracking-widest font-medium">{label}</span>
+      </div>
+      <span className="text-sm font-semibold text-foreground">{value}</span>
+    </div>
+  )
+}
+
+function IngredientItem({ text, index }: { text: string, index: number }) {
+  return (
+    <div className="flex items-start gap-3 py-3 border-b border-border/40 last:border-0 group hover:bg-muted/30 transition-colors px-2 rounded-md -mx-2">
+      <Checkbox 
+        id={`ing-${index}`} 
+        className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary" 
+      />
+      <label 
+        htmlFor={`ing-${index}`}
+        className="text-base leading-relaxed text-foreground/90 peer-disabled:opacity-70 cursor-pointer select-none group-hover:text-foreground transition-colors"
+      >
+        {text}
+      </label>
+    </div>
+  )
 }
 
 export default async function PublicRecipePage({
@@ -34,6 +71,7 @@ export default async function PublicRecipePage({
   const { id } = await params
   const supabase = await createClient()
 
+  // 1. Obtener receta
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
     .select("*")
@@ -45,7 +83,8 @@ export default async function PublicRecipePage({
     notFound()
   }
 
-  const { data: profile, error: profileError } = await supabase
+  // 2. Obtener perfil del autor
+  const { data: profile } = await supabase
     .from("profiles")
     .select("username")
     .eq("id", recipe.user_id)
@@ -53,152 +92,183 @@ export default async function PublicRecipePage({
 
   const username = profile?.username || "Unknown"
 
+  // 3. Obtener sub-recetas
   const { data: components } = await supabase
     .from("recipe_components")
     .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url)")
     .eq("parent_recipe_id", id)
   
-  // --- CORRECCIÓN AQUÍ: Filtrar nulos para evitar el crash ---
   const subRecipes = components?.map((c: any) => c.recipes).filter((r: any) => r !== null) || []
-
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-background">
       <PublicHeader />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
-          <Button asChild variant="ghost" className="mb-6 -ml-2">
-            <Link href={`/profile/${encodeURIComponent(username)}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to @{username}'s profile
-            </Link>
-          </Button>
+      
+      <main className="flex-1 w-full">
+        
+        {/* --- CABECERA CENTRADA --- */}
+        <div className="w-full max-w-4xl mx-auto pt-8 pb-6 px-4 md:pt-12 md:px-6 text-center">
+          
+          {/* Navegación */}
+          <div className="flex justify-center mb-6">
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-full">
+              <Link href={`/profile/${encodeURIComponent(username)}`}>
+                <ArrowLeft className="mr-1.5 h-4 w-4" />
+                Back to @{username}
+              </Link>
+            </Button>
+          </div>
 
-          <div className="space-y-6">
-            {recipe.image_url && (
-              <div className="relative h-64 md:h-96 w-full overflow-hidden rounded-lg">
-                <Image src={recipe.image_url || "/placeholder.svg"} alt={recipe.name} fill className="object-cover" />
+          {/* Badges y Rating */}
+          <div className="flex items-center justify-center gap-3 mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {recipe.category && (
+              <Badge variant="secondary" className="rounded-full px-3 font-medium text-muted-foreground bg-secondary">
+                {recipe.category}
+              </Badge>
+            )}
+            {recipe.difficulty && (
+              <Badge variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">
+                {recipe.difficulty}
+              </Badge>
+            )}
+            {!recipe.is_component && <StarRating rating={recipe.rating} />}
+          </div>
+
+          {/* Título */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 leading-tight tracking-tight text-balance animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
+            {recipe.name}
+          </h1>
+
+          {/* Autor y Link Externo */}
+          <div className="flex items-center justify-center gap-4 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 px-3 py-1 rounded-full border border-border/30">
+              <User className="h-4 w-4" />
+              <span>Recipe by <strong className="text-foreground">@{username}</strong></span>
+            </div>
+            
+            {recipe.link && (
+              <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
+                <a href={recipe.link} target="_blank" rel="noopener noreferrer">
+                  <span className="text-xs font-medium">View Source</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Barra de Datos (Metadata Strip) */}
+          <div className="flex flex-wrap items-center justify-center gap-y-4 border-y border-border/60 py-4 mb-8 bg-card/50 backdrop-blur-sm rounded-xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 w-fit mx-auto shadow-sm">
+            <MetaItem icon={Clock} label="Total Time" value={totalTime > 0 ? `${totalTime} min` : null} />
+            <MetaItem icon={Utensils} label="Prep" value={recipe.prep_time ? `${recipe.prep_time} min` : null} />
+            <MetaItem icon={Flame} label="Cook" value={recipe.cook_time ? `${recipe.cook_time} min` : null} />
+            <MetaItem icon={Users} label="Serves" value={recipe.servings ? `${recipe.servings} pp` : null} />
+          </div>
+        </div>
+
+        {/* --- IMAGEN PRINCIPAL --- */}
+        <div className="w-full max-w-5xl mx-auto px-4 mb-12">
+          <div className="relative aspect-video md:aspect-[21/9] w-full overflow-hidden rounded-xl shadow-lg border border-border/30 bg-muted group">
+            {recipe.image_url ? (
+              <Image 
+                src={recipe.image_url} 
+                alt={recipe.name} 
+                fill 
+                className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                priority
+              />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center bg-secondary/30 text-muted-foreground/20">
+                <ChefHat className="h-24 w-24 mb-4 opacity-20" />
+                <span className="font-serif text-2xl italic opacity-40">Bon Appétit</span>
               </div>
             )}
+          </div>
+        </div>
 
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <h1 className="text-3xl md:text-4xl font-serif font-bold text-balance">{recipe.name}</h1>
+        {/* --- CONTENIDO (Grid) --- */}
+        <div className="container max-w-5xl mx-auto px-4 pb-20">
+          <div className="grid gap-12 lg:grid-cols-[320px_1fr] items-start">
+            
+            {/* COLUMNA IZQUIERDA: INGREDIENTES */}
+            <aside className="space-y-8">
               
-              <div className="flex gap-3 flex-shrink-0">
-                {recipe.link && (
-                  <>
-                    <Button asChild variant="outline" size="icon" className="md:hidden">
-                      <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                    <Button asChild variant="outline" className="hidden md:inline-flex">
-                      <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        View Source
-                      </a>
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground">
-              <div className="flex items-center gap-1.5 text-sm">
-                <User className="h-4 w-4" />
-                <span>Recipe by <Link href={`/profile/${encodeURIComponent(username)}`} className="font-medium text-foreground hover:underline">@{username}</Link></span>
-              </div>
-              {recipe.category && <Badge variant="outline">{recipe.category}</Badge>}
-              {recipe.difficulty && <Badge variant="secondary">{recipe.difficulty}</Badge>}
-              
-              {totalTime > 0 && (
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Clock className="h-4 w-4" />
-                  <span>
-                    {recipe.prep_time && `Prep: ${recipe.prep_time}m`}
-                    {recipe.prep_time && recipe.cook_time && " | "}
-                    {recipe.cook_time && `Cook: ${recipe.cook_time}m`}
-                    {totalTime > 0 && ` (Total: ${totalTime}m)`}
-                  </span>
-                </div>
-              )}
-              
-              {recipe.servings && (
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Users className="h-4 w-4" />
-                  <span>{recipe.servings} servings</span>
-                </div>
-              )}
-            </div>
-
-            {subRecipes.length > 0 && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                     <Layers className="h-5 w-5 text-primary" />
-                     <CardTitle className="font-serif text-lg">Includes</CardTitle>
+              {/* Sub-recetas */}
+              {subRecipes.length > 0 && (
+                <Card className="border-primary/20 bg-primary/5 shadow-none overflow-hidden">
+                  <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2 text-primary font-serif font-bold">
+                    <Layers className="h-4 w-4" />
+                    Required Components
                   </div>
-                </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2">
-                  {subRecipes.map((sub: any) => (
-                    <Link key={sub.id} href={`/profile/recipe/${sub.id}`}>
-                       <div className="flex items-center gap-3 p-2 rounded-md bg-background border hover:shadow-sm transition-all group">
-                          <div className="relative h-12 w-12 rounded overflow-hidden bg-muted shrink-0">
-                             <Image 
-                                src={sub.image_url || "/placeholder.svg"} 
-                                alt={sub.name} 
-                                fill 
-                                className="object-cover"
-                             />
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-primary/10">
+                      {subRecipes.map((sub: any) => (
+                        <Link key={sub.id} href={`/profile/recipe/${sub.id}`} className="flex items-center gap-3 p-3 hover:bg-primary/10 transition-colors">
+                          <div className="relative h-10 w-10 rounded bg-background shrink-0 overflow-hidden border border-primary/10">
+                            <Image 
+                              src={sub.image_url || "/placeholder.svg"} 
+                              alt={sub.name} 
+                              fill 
+                              className="object-cover"
+                            />
                           </div>
-                          <div className="flex-1 min-w-0">
-                             <p className="font-medium truncate group-hover:text-primary transition-colors">{sub.name}</p>
-                             <p className="text-xs text-muted-foreground">Component</p>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                       </div>
-                    </Link>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
+                          <span className="text-sm font-medium line-clamp-1 text-foreground/80">{sub.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-serif">Ingredients</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
+              {/* Lista de Ingredientes */}
+              <div>
+                <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border flex items-center justify-between">
+                  <span>Ingredients</span>
+                  <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                    {recipe.ingredients.length} items
+                  </span>
+                </h3>
+                <div className="flex flex-col gap-1">
                   {recipe.ingredients.map((ingredient: string, index: number) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <Badge variant="secondary" className="mt-0.5">
-                        {index + 1}
-                      </Badge>
-                      <span className="leading-relaxed">{ingredient}</span>
-                    </li>
+                    <IngredientItem key={index} text={ingredient} index={index} />
                   ))}
-                </ul>
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+            </aside>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-serif">Instructions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ol className="space-y-4">
-                  {recipe.steps.map((step: string, index: number) => (
-                    <li key={index} className="flex gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-                        {index + 1}
-                      </div>
-                      <p className="leading-relaxed pt-1">{step}</p>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
+            {/* COLUMNA DERECHA: INSTRUCCIONES */}
+            <div className="space-y-8">
+              <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border">
+                Preparation
+              </h3>
+              
+              <div className="space-y-10">
+                {recipe.steps.map((step: string, index: number) => (
+                  <div key={index} className="group relative pl-4">
+                    {/* Número grande */}
+                    <div className="absolute -left-4 -top-2 text-6xl font-serif font-bold text-muted-foreground/10 select-none group-hover:text-primary/10 transition-colors">
+                      {index + 1}
+                    </div>
+                    
+                    <div className="relative">
+                      <h4 className="font-bold text-foreground mb-2 text-sm uppercase tracking-widest text-muted-foreground">Step {index + 1}</h4>
+                      <p className="text-lg leading-relaxed text-foreground/90 font-serif">
+                        {step}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Separator className="my-12" />
+              
+              <div className="flex justify-center">
+                <p className="text-center text-muted-foreground italic font-serif">
+                  Enjoy your meal!
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>
