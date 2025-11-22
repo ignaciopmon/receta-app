@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-// --- ICONOS ACTUALIZADOS (ELIMINADO 'DoorOpen') ---
-import { CheckCircle, Paintbrush, Baseline } from "lucide-react"
+import { Paintbrush, Baseline, Save, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type Theme = "light" | "dark" | "pastel"
 
@@ -25,7 +25,7 @@ interface SettingsFormProps {
 export function SettingsForm({ initialTheme, initialIngredientsCount, initialStepsCount, userId }: SettingsFormProps) {
   const router = useRouter()
   const supabase = createClient()
-  const { theme, setTheme } = useTheme() // 'theme' no se usa, pero lo mantenemos por si acaso
+  const { setTheme } = useTheme()
 
   const [selectedTheme, setSelectedTheme] = useState<Theme>(initialTheme)
   const [ingredientsCount, setIngredientsCount] = useState(initialIngredientsCount)
@@ -60,66 +60,87 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
     }
   }
 
-  // --- FUNCIÓN 'handleLogout' ELIMINADA ---
-
   return (
     <div className="space-y-6">
-      <Card>
+      {/* Theme Card */}
+      <Card className="border-border/40 shadow-sm">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Paintbrush className="h-5 w-5" />
-            <CardTitle>Theme</CardTitle>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-2 bg-primary/5 rounded-full text-primary">
+               <Paintbrush className="h-5 w-5" />
+            </div>
+            <CardTitle className="font-serif text-xl">Appearance</CardTitle>
           </div>
-          <CardDescription>Choose your preferred color scheme</CardDescription>
+          <CardDescription>Customize the look and feel of the application.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
-            {/* ... (el contenido de los botones de tema no cambia) ... */}
             <button
               onClick={() => handleThemeChange("light")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                selectedTheme === "light" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-              }`}
+              className={cn(
+                "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02]",
+                selectedTheme === "light" 
+                  ? "border-primary bg-primary/5 shadow-sm" 
+                  : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
+              )}
             >
-              <div className="w-12 h-12 rounded-full bg-white border-2 border-gray-300" />
+              <div className="w-full aspect-video rounded-lg bg-[#fafafa] border border-gray-200 shadow-inner relative overflow-hidden">
+                 <div className="absolute top-2 left-2 right-2 h-2 bg-gray-200 rounded-full opacity-50"></div>
+                 <div className="absolute top-6 left-2 w-1/2 h-2 bg-gray-200 rounded-full opacity-30"></div>
+              </div>
               <span className="text-sm font-medium">Light</span>
             </button>
 
             <button
               onClick={() => handleThemeChange("dark")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                selectedTheme === "dark" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-              }`}
+              className={cn(
+                "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02]",
+                selectedTheme === "dark" 
+                  ? "border-primary bg-primary/5 shadow-sm" 
+                  : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
+              )}
             >
-              <div className="w-12 h-12 rounded-full bg-gray-900 border-2 border-gray-700" />
+              <div className="w-full aspect-video rounded-lg bg-[#1a1a1a] border border-gray-700 shadow-inner relative overflow-hidden">
+                 <div className="absolute top-2 left-2 right-2 h-2 bg-gray-700 rounded-full opacity-50"></div>
+                 <div className="absolute top-6 left-2 w-1/2 h-2 bg-gray-700 rounded-full opacity-30"></div>
+              </div>
               <span className="text-sm font-medium">Dark</span>
             </button>
 
             <button
               onClick={() => handleThemeChange("pastel")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                selectedTheme === "pastel" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-              }`}
+              className={cn(
+                "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02]",
+                selectedTheme === "pastel" 
+                  ? "border-primary bg-primary/5 shadow-sm" 
+                  : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
+              )}
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 border-2 border-pink-300" />
+              <div className="w-full aspect-video rounded-lg bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 border border-pink-200 shadow-inner relative overflow-hidden">
+                 <div className="absolute top-2 left-2 right-2 h-2 bg-white/50 rounded-full"></div>
+                 <div className="absolute top-6 left-2 w-1/2 h-2 bg-white/50 rounded-full"></div>
+              </div>
               <span className="text-sm font-medium">Pastel</span>
             </button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Defaults Card */}
+      <Card className="border-border/40 shadow-sm">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Baseline className="h-5 w-5" />
-            <CardTitle>Default Form Fields</CardTitle>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-2 bg-primary/5 rounded-full text-primary">
+               <Baseline className="h-5 w-5" />
+            </div>
+            <CardTitle className="font-serif text-xl">Editor Defaults</CardTitle>
           </div>
           <CardDescription>
-            Set how many ingredient and step fields appear by default when creating a recipe
+            Set the default number of fields when creating a new recipe.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
+        <CardContent className="grid sm:grid-cols-2 gap-6">
+          <div className="space-y-3">
             <Label htmlFor="ingredients">Default Ingredients Count</Label>
             <Input
               id="ingredients"
@@ -128,10 +149,11 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
               max="20"
               value={ingredientsCount}
               onChange={(e) => setIngredientsCount(Number(e.target.value))}
+              className="max-w-[120px]"
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="steps">Default Steps Count</Label>
             <Input
               id="steps"
@@ -140,16 +162,20 @@ export function SettingsForm({ initialTheme, initialIngredientsCount, initialSte
               max="20"
               value={stepsCount}
               onChange={(e) => setStepsCount(Number(e.target.value))}
+              className="max-w-[120px]"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* --- BOTÓN DE LOGOUT ELIMINADO --- */}
-      <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={isSaving}>
-          <CheckCircle className="mr-2 h-4 w-4" />
-          {isSaving ? "Saving..." : "Save Settings"}
+      <div className="flex justify-end pt-2">
+        <Button onClick={handleSave} disabled={isSaving} size="lg" className="w-full sm:w-auto">
+          {isSaving ? (
+             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+             <Save className="mr-2 h-4 w-4" />
+          )}
+          {isSaving ? "Saving Preferences..." : "Save All Preferences"}
         </Button>
       </div>
     </div>

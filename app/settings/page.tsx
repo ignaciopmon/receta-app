@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server"
 import { SettingsHeader } from "@/components/settings-header"
 import { SettingsForm } from "@/components/settings-form"
 import { TrashSection } from "@/components/trash-section"
-import { AccountForm } from "@/components/account-form" // --- AÑADIR ESTA LÍNEA ---
+import { AccountForm } from "@/components/account-form"
+import { Separator } from "@/components/ui/separator"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -15,19 +16,14 @@ export default async function SettingsPage() {
     redirect("/auth/login")
   }
 
-  // Fetch user preferences
   const { data: preferences } = await supabase.from("user_preferences").select("*").eq("user_id", data.user.id).single()
 
-  // --- AÑADIR ESTO ---
-  // Fetch user profile for username
   const { data: profile } = await supabase
     .from("profiles")
     .select("username")
     .eq("id", data.user.id)
     .single()
-  // --------------------
 
-  // Fetch deleted recipes
   const { data: deletedRecipes } = await supabase
     .from("recipes")
     .select("*")
@@ -36,30 +32,54 @@ export default async function SettingsPage() {
     .order("deleted_at", { ascending: false })
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-background">
       <SettingsHeader />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
-          <h1 className="text-4xl font-serif font-bold mb-8 text-balance">Settings</h1>
+      
+      <main className="flex-1 w-full pb-20">
+        {/* Cabecera de Sección */}
+        <div className="w-full bg-muted/30 border-b border-border/40 py-12 mb-12">
+          <div className="container mx-auto px-4 text-center max-w-2xl">
+            <h1 className="text-4xl font-serif font-bold mb-3 text-foreground tracking-tight">
+              Settings
+            </h1>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              Manage your account preferences, customize your experience, and recover deleted items.
+            </p>
+          </div>
+        </div>
 
-          <div className="space-y-8">
-            
-            {/* --- AÑADIR ESTE COMPONENTE --- */}
+        <div className="container mx-auto px-4 max-w-3xl space-y-10">
+          
+          {/* Sección Cuenta */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-serif font-semibold px-1">Account & Session</h2>
             <AccountForm
               initialUsername={profile?.username || ''}
               userId={data.user.id}
             />
-            {/* ------------------------------- */}
+          </section>
 
+          <Separator className="opacity-50" />
+
+          {/* Sección Preferencias */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-serif font-semibold px-1">App Preferences</h2>
             <SettingsForm
               initialTheme={preferences?.theme || "light"}
               initialIngredientsCount={preferences?.default_ingredients_count || 3}
               initialStepsCount={preferences?.default_steps_count || 3}
               userId={data.user.id}
             />
+          </section>
 
+          <Separator className="opacity-50" />
+
+          {/* Sección Papelera */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-serif font-semibold px-1 text-destructive/80">Danger Zone</h2>
             <TrashSection deletedRecipes={deletedRecipes || []} />
-          </div>
+          </section>
+
         </div>
       </main>
     </div>
