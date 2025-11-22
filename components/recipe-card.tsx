@@ -6,7 +6,6 @@ import { ExternalLink, Archive, PenSquare, Star } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
-// --- 1. IMPORTAR useRouter ---
 import { useRouter } from "next/navigation" 
 import { createClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +18,6 @@ interface RecipeCardProps {
   steps: string[]
   imageUrl?: string | null
   link?: string | null
-  // --- 2. HACER onUpdate OPCIONAL ---
   onUpdate?: () => void
   category: string | null
   difficulty: string | null
@@ -27,13 +25,12 @@ interface RecipeCardProps {
   rating: number | null
 }
 
-// ... (El componente StarRating no cambia) ...
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
     return (
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-0.5 opacity-30 hover:opacity-100 transition-opacity">
         {[...Array(5)].map((_, i) => (
-          <Star key={i} className="h-4 w-4 text-muted-foreground/50" />
+          <Star key={i} className="h-3 w-3" />
         ))}
       </div>
     )
@@ -45,15 +42,14 @@ function StarRating({ rating }: { rating: number | null }) {
         <Star
           key={i}
           className={cn(
-            "h-4 w-4",
-            i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50"
+            "h-3 w-3",
+            i < rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30"
           )}
         />
       ))}
     </div>
   )
 }
-
 
 export function RecipeCard({
   id,
@@ -62,20 +58,22 @@ export function RecipeCard({
   steps,
   imageUrl,
   link,
-  onUpdate, // <-- Ahora es opcional
+  onUpdate,
   category,
   difficulty,
   isFavorite,
   rating,
 }: RecipeCardProps) {
-  // --- 3. OBTENER EL ROUTER ---
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isFavoriting, setIsFavoriting] = useState(false)
   const [currentFavorite, setCurrentFavorite] = useState(isFavorite)
   const supabase = createClient()
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevenir navegación si se pulsa dentro de un link
+    e.stopPropagation()
+    
     if (!confirm("Are you sure you want to delete this recipe?")) return
 
     setIsDeleting(true)
@@ -84,11 +82,10 @@ export function RecipeCard({
 
       if (error) throw error
       
-      // --- 4. LÓGICA DE ACTUALIZACIÓN ---
       if (onUpdate) {
-        onUpdate() // Llama a la función si existe (para /recipes)
+        onUpdate()
       } else {
-        router.refresh() // Recarga la página si no (para /cookbooks/[id])
+        router.refresh()
       }
       
     } catch (error) {
@@ -99,7 +96,10 @@ export function RecipeCard({
     }
   }
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
     setIsFavoriting(true)
     const newFavoriteState = !currentFavorite
     try {
@@ -112,11 +112,10 @@ export function RecipeCard({
       
       setCurrentFavorite(newFavoriteState)
       
-      // --- 5. LÓGICA DE ACTUALIZACIÓN ---
       if (onUpdate) {
-        onUpdate() // Llama a la función si existe
+        onUpdate()
       } else {
-        router.refresh() // Recarga la página si no
+        router.refresh()
       }
       
     } catch (error) {
@@ -127,69 +126,117 @@ export function RecipeCard({
   }
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-lg flex flex-col">
-      {imageUrl && (
-        <div className="relative h-48 w-full overflow-hidden bg-muted">
-          <Image src={imageUrl || "/placeholder.svg"} alt={name} fill className="object-cover" />
-        </div>
-      )}
-      <CardHeader className="relative">
-        <h3 className="text-xl font-serif font-semibold leading-tight text-balance pr-10">{name}</h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 right-4 text-muted-foreground hover:text-yellow-400"
-          onClick={handleToggleFavorite}
-          disabled={isFavoriting}
-        >
-          <Star
+    <Link href={`/recipes/${id}`} className="block h-full group">
+      <Card className="h-full overflow-hidden flex flex-col border border-border/40 bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-border/80 p-0 gap-0 rounded-xl">
+        
+        {/* Header de Imagen - Ratio corregido y overlays */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+          {imageUrl ? (
+            <Image 
+              src={imageUrl} 
+              alt={name} 
+              fill 
+              className="object-cover transition-transform duration-700 group-hover:scale-105" 
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-secondary/30 text-muted-foreground/20">
+               {/* Placeholder elegante */}
+               <span className="font-serif text-4xl italic">Cocina</span>
+            </div>
+          )}
+          
+          {/* Overlay degradado para que el botón de favorito resalte */}
+          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/30 to-transparent opacity-60 pointer-events-none" />
+
+          <Button
+            variant="ghost"
+            size="icon"
             className={cn(
-              "h-5 w-5 transition-all",
-              currentFavorite && "fill-yellow-400 text-yellow-400"
+              "absolute top-3 right-3 h-8 w-8 rounded-full backdrop-blur-sm transition-all",
+              currentFavorite 
+                ? "bg-white/90 dark:bg-black/90 text-yellow-500 hover:text-yellow-600 hover:bg-white" 
+                : "bg-black/20 text-white hover:bg-white hover:text-yellow-500"
             )}
-          />
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-4 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          {category && <Badge variant="outline">{category}</Badge>}
-          {difficulty && <Badge variant="secondary">{difficulty}</Badge>}
-          <div className="flex-1" />
-          <StarRating rating={rating} />
+            onClick={handleToggleFavorite}
+            disabled={isFavoriting}
+          >
+            <Star className={cn("h-4 w-4", currentFavorite && "fill-current")} />
+          </Button>
+        </div>
+
+        {/* Contenido */}
+        <div className="flex flex-col flex-1 p-5">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div>
+              <h3 className="font-serif text-xl font-bold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                {name}
+              </h3>
+              <div className="mt-1 flex items-center gap-2">
+                 <StarRating rating={rating} />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {category && (
+              <Badge variant="secondary" className="font-normal text-xs px-2 py-0.5 bg-secondary/50 text-secondary-foreground/80">
+                {category}
+              </Badge>
+            )}
+            {difficulty && (
+              <Badge variant="outline" className="font-normal text-xs px-2 py-0.5 border-border/60 text-muted-foreground">
+                {difficulty}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="space-y-1.5 flex-1">
+            <div className="flex justify-between text-xs text-muted-foreground uppercase tracking-wider font-medium">
+              <span>Ingredients</span>
+              <span>{ingredients.length} items</span>
+            </div>
+            <p className="text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
+              {ingredients.slice(0, 3).join(", ")}
+              {ingredients.length > 3 && "..."}
+            </p>
+          </div>
+        </div>
+
+        {/* Footer de acciones - Minimalista */}
+        <div className="p-4 pt-0 mt-auto flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+          <div className="flex gap-1">
+             {/* Botón Editar */}
+            <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
+              <Link href={`/recipes/edit/${id}`}>
+                <PenSquare className="h-4 w-4" />
+              </Link>
+            </Button>
+            
+            {/* Botón Link Externo */}
+            {link && (
+              <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
+                <a href={link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Botón Borrar */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
+            onClick={handleDelete} 
+            disabled={isDeleting}
+          >
+            <Archive className="h-4 w-4" />
+          </Button>
         </div>
         
-        <div>
-          <p className="text-sm font-medium text-muted-foreground mb-1">Ingredients ({ingredients.length})</p>
-          <p className="text-sm line-clamp-2">
-            {ingredients.slice(0, 3).join(", ")}
-            {ingredients.length > 3 && "..."}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground mb-1">Steps ({steps.length})</p>
-          <p className="text-sm line-clamp-2">{steps[0]}</p>
-        </div>
-      </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button asChild variant="outline" className="flex-1 bg-transparent">
-          <Link href={`/recipes/${id}`}>View Details</Link>
-        </Button>
-        <Button asChild variant="outline" size="icon">
-          <Link href={`/recipes/edit/${id}`}>
-            <PenSquare className="h-4 w-4" />
-          </Link>
-        </Button>
-        {link && (
-          <Button asChild variant="outline" size="icon">
-            <a href={link} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </Button>
-        )}
-        <Button variant="destructive" size="icon" onClick={handleDelete} disabled={isDeleting}>
-          <Archive className="h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
+        {/* Espaciador para cuando las acciones están ocultas (para evitar saltos) */}
+        <div className="h-4 block group-hover:hidden"></div>
+      </Card>
+    </Link>
   )
 }
