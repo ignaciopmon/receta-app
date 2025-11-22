@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     // CAMBIO AQUÍ: Usamos 'gemini-2.0-flash' que soporta generación de imágenes
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image", 
+      model: "gemini-3-pro-image-preview", 
       contents: prompt,
       config: {
         responseModalities: ["IMAGE"], // Forzamos la respuesta como imagen
