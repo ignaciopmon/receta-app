@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, Filter } from "lucide-react"
+import { Star, SlidersHorizontal } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface RecipeFiltersProps {
   category: string
@@ -25,16 +26,21 @@ export function RecipeFilters({
   rating,
   onRatingChange,
 }: RecipeFiltersProps) {
+  
+  // Estilo base para los triggers de los selectores
+  const triggerClass = "w-full sm:w-[140px] h-9 rounded-full border-border/60 bg-background/50 backdrop-blur-sm text-xs font-medium hover:bg-accent/50 hover:border-border transition-all focus:ring-0"
+
   return (
-    // --- LAYOUT RESPONSIVO PARA FILTROS ---
-    <div className="flex flex-col sm:flex-row sm:flex-wrap items-center gap-3">
-      <div className="flex items-center gap-2 self-start">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Filters:</span>
+    <div className="flex flex-col sm:flex-row sm:flex-wrap items-center gap-3 w-full sm:w-auto">
+      
+      {/* Icono decorativo en móvil, oculto en desktop para limpieza */}
+      <div className="flex items-center gap-2 self-start sm:hidden text-muted-foreground mb-1">
+        <SlidersHorizontal className="h-3 w-3" />
+        <span className="text-xs uppercase tracking-wider font-semibold">Filters</span>
       </div>
 
       <Select value={category} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-full sm:w-[150px]">
+        <SelectTrigger className={triggerClass}>
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
@@ -49,7 +55,7 @@ export function RecipeFilters({
       </Select>
 
       <Select value={difficulty} onValueChange={onDifficultyChange}>
-        <SelectTrigger className="w-full sm:w-[150px]">
+        <SelectTrigger className={triggerClass}>
           <SelectValue placeholder="Difficulty" />
         </SelectTrigger>
         <SelectContent>
@@ -61,7 +67,7 @@ export function RecipeFilters({
       </Select>
       
       <Select value={rating} onValueChange={onRatingChange}>
-        <SelectTrigger className="w-full sm:w-[150px]">
+        <SelectTrigger className={triggerClass}>
           <SelectValue placeholder="Rating" />
         </SelectTrigger>
         <SelectContent>
@@ -75,9 +81,17 @@ export function RecipeFilters({
         </SelectContent>
       </Select>
 
-      <Button variant={showFavorites ? "default" : "outline"} size="sm" onClick={onToggleFavorites} className="w-full sm:w-auto">
-        <Star className={`mr-2 h-4 w-4 ${showFavorites ? "fill-current" : ""}`} />
-        Favorites
+      <Button 
+        variant={showFavorites ? "secondary" : "outline"} 
+        size="sm" 
+        onClick={onToggleFavorites} 
+        className={cn(
+          "w-full sm:w-auto rounded-full h-9 px-4 gap-1.5 border-border/60 bg-background/50 backdrop-blur-sm text-xs font-medium hover:bg-accent/50 hover:border-border transition-all",
+          showFavorites && "bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-900/30 dark:text-yellow-400"
+        )}
+      >
+        <Star className={cn("h-3.5 w-3.5", showFavorites ? "fill-current" : "text-muted-foreground")} />
+        <span>Favorites</span>
       </Button>
     </div>
   )

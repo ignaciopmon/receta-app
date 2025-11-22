@@ -10,7 +10,7 @@ import { RecipeSearch } from "@/components/recipe-search"
 import { RecipeFilters } from "@/components/recipe-filters"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { CookingPot, Search, NotebookPen } from "lucide-react"
+import { CookingPot, Search, NotebookPen, ChefHat } from "lucide-react"
 import { RecipeCardSkeleton } from "@/components/recipe-card-skeleton"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { WelcomeModal } from "@/components/welcome-modal"
@@ -31,6 +31,7 @@ interface Recipe {
   tags: string[] | null
   rating: number | null
   is_component: boolean
+  is_public: boolean
 }
 
 export default function RecipesPage() {
@@ -90,13 +91,12 @@ export default function RecipesPage() {
       
       checkWelcomeModal(user.id)
 
-      // --- FILTRO RE-ACTIVADO: Ocultar sub-recetas ---
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select("*")
         .eq("user_id", user.id)
         .is("deleted_at", null)
-        .eq("is_component", false) // <--- AQUÍ ESTÁ EL FILTRO
+        .eq("is_component", false) 
         .order("created_at", { ascending: false })
 
       if (fetchError) {
@@ -183,15 +183,16 @@ export default function RecipesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
+      <div className="flex min-h-screen w-full flex-col bg-background">
         <RecipeHeader />
-        <main className="flex-1 bg-muted/30">
-          <div className="container mx-auto py-8 px-4">
-            <div className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
-              <p className="text-muted-foreground text-lg">Loading your recipes...</p>
+        <main className="flex-1">
+          <div className="container mx-auto py-12 px-4 max-w-7xl">
+            <div className="mb-12 text-center space-y-4">
+              <div className="h-8 w-48 bg-muted rounded-full mx-auto animate-pulse" />
+              <div className="h-4 w-64 bg-muted/50 rounded-full mx-auto animate-pulse" />
             </div>
-            <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <RecipeCardSkeleton />
               <RecipeCardSkeleton />
               <RecipeCardSkeleton />
               <RecipeCardSkeleton />
@@ -204,13 +205,16 @@ export default function RecipesPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
+      <div className="flex min-h-screen w-full flex-col bg-background">
         <RecipeHeader />
-        <main className="flex-1 bg-muted/30 flex items-center justify-center">
-          <div className="text-center p-4">
-            <h2 className="text-xl font-serif font-semibold mb-2">Error</h2>
-            <p className="text-muted-foreground">{error}</p>
-            <Button onClick={() => fetchData()} className="mt-4">
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center p-8 max-w-md">
+            <div className="bg-destructive/10 text-destructive p-4 rounded-full w-fit mx-auto mb-4">
+               <CookingPot className="h-8 w-8" />
+            </div>
+            <h2 className="text-xl font-serif font-semibold mb-2">Something went wrong</h2>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button onClick={() => fetchData()} className="rounded-full">
               Try Again
             </Button>
           </div>
@@ -220,56 +224,75 @@ export default function RecipesPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-background">
       <RecipeHeader />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto py-8 px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Cocina</h1>
-            <p className="text-muted-foreground text-lg">
+      
+      <main className="flex-1 w-full pb-20">
+        {/* --- HERO SECTION (Texto centrado) --- */}
+        <div className="relative w-full bg-muted/30 border-b border-border/40 pt-12 pb-12 mb-12">
+          <div className="container mx-auto px-4 text-center">
+            <div className="inline-flex items-center justify-center p-2 bg-background rounded-full shadow-sm mb-6">
+               <ChefHat className="h-5 w-5 text-primary mr-2" />
+               <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">My Kitchen</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 tracking-tight text-balance">
+              Your Collection
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {recipes.length > 0
-                ? `You have ${recipes.length} ${recipes.length === 1 ? "recipe" : "recipes"} saved`
-                : "Start building your personal recipe collection"}
+                ? `You have curated ${recipes.length} ${recipes.length === 1 ? "recipe" : "recipes"} in your personal cookbook.`
+                : "Start your culinary journey by adding your first recipe."}
             </p>
           </div>
+        </div>
 
+        <div className="container mx-auto px-4 max-w-7xl">
+          
+          {/* --- BARRA DE HERRAMIENTAS UNIFICADA --- */}
           {recipes.length > 0 && (
-            <div className="space-y-6 mb-8">
-              <RecipeSearch value={searchQuery} onChange={setSearchQuery} />
-              <RecipeFilters
-                category={category}
-                onCategoryChange={setCategory}
-                difficulty={difficulty}
-                onDifficultyChange={setDifficulty}
-                showFavorites={showFavorites}
-                onToggleFavorites={() => setShowFavorites(!showFavorites)}
-                rating={rating}
-                onRatingChange={setRating}
-              />
+            <div className="sticky top-20 z-30 mb-10 -mx-4 px-4 md:mx-0 md:px-0">
+              <div className="bg-background/80 backdrop-blur-xl border border-border/50 shadow-sm rounded-2xl p-3 md:p-4 flex flex-col md:flex-row gap-4 items-center justify-between transition-all">
+                <RecipeSearch value={searchQuery} onChange={setSearchQuery} />
+                
+                <div className="w-full h-px bg-border/50 md:hidden" /> {/* Separador móvil */}
+                
+                <RecipeFilters
+                  category={category}
+                  onCategoryChange={setCategory}
+                  difficulty={difficulty}
+                  onDifficultyChange={setDifficulty}
+                  showFavorites={showFavorites}
+                  onToggleFavorites={() => setShowFavorites(!showFavorites)}
+                  rating={rating}
+                  onRatingChange={setRating}
+                />
+              </div>
             </div>
           )}
 
+          {/* --- CONTENIDO GRID --- */}
           {recipes.length === 0 ? (
-            <Empty className="py-16">
-              <EmptyMedia variant="icon">
-                <CookingPot className="h-12 w-12" />
+            <Empty className="py-16 border-none bg-transparent shadow-none">
+              <EmptyMedia variant="icon" className="bg-primary/10 text-primary mb-6 p-6 rounded-full">
+                <CookingPot className="h-10 w-10" />
               </EmptyMedia>
-              <EmptyTitle className="text-2xl font-serif font-semibold">
-                No recipes yet
+              <EmptyTitle className="text-2xl font-serif font-bold mb-2">
+                Your kitchen is quiet
               </EmptyTitle>
-              <EmptyDescription className="max-w-md">
-                Start your culinary journey by adding your first recipe.
+              <EmptyDescription className="max-w-md text-base">
+                Create your first recipe to bring this page to life.
               </EmptyDescription>
-              <Button asChild size="lg" className="mt-4">
+              <Button asChild size="lg" className="mt-8 rounded-full shadow-lg hover:shadow-xl transition-all">
                 <Link href="/recipes/new">
                   <NotebookPen className="mr-2 h-5 w-5" />
-                  Add Your First Recipe
+                  Create First Recipe
                 </Link>
               </Button>
             </Empty>
 
           ) : filteredRecipes.length > 0 ? (
-            <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}
@@ -289,19 +312,19 @@ export default function RecipesPage() {
             </div>
 
           ) : (
-            <Empty className="py-16">
-              <EmptyMedia variant="icon">
-                <Search className="h-12 w-12" />
+            <Empty className="py-16 border-none bg-transparent shadow-none">
+              <EmptyMedia variant="icon" className="bg-muted p-4 rounded-full mb-4">
+                <Search className="h-8 w-8 text-muted-foreground" />
               </EmptyMedia>
-              <EmptyTitle className="text-2xl font-serif font-semibold">
-                No recipes found
+              <EmptyTitle className="text-xl font-serif font-semibold">
+                No matches found
               </EmptyTitle>
               <EmptyDescription className="max-w-md">
-                Try adjusting your search or filters.
+                Try adjusting your filters or search terms to find what you're looking for.
               </EmptyDescription>
               <Button
                 variant="outline"
-                className="mt-4"
+                className="mt-6 rounded-full border-dashed"
                 onClick={() => {
                   setSearchQuery("")
                   setCategory("all")
@@ -310,12 +333,13 @@ export default function RecipesPage() {
                   setRating("all")
                 }}
               >
-                Clear Filters
+                Clear All Filters
               </Button>
             </Empty>
           )}
         </div>
       </main>
+      
       {showWelcomeModal && (
         <WelcomeModal
           userId={welcomeUserId}
