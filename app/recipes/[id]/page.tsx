@@ -67,7 +67,8 @@ export default async function RecipeDetailPage({
     .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url, prep_time, cook_time)")
     .eq("parent_recipe_id", id)
   
-  const subRecipes = components?.map((c: any) => c.recipes) || []
+  // --- CORRECCIÓN: Filtrar nulos ---
+  const subRecipes = components?.map((c: any) => c.recipes).filter((r: any) => r !== null) || []
 
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
 
@@ -97,7 +98,6 @@ export default async function RecipeDetailPage({
                 recipeId={recipe.id}
                 initialIsPublic={recipe.is_public}
                 link={recipe.link}
-                // --- PASAMOS EL FLAG ---
                 isComponent={recipe.is_component}
               />
             </div>
@@ -125,7 +125,6 @@ export default async function RecipeDetailPage({
                 </div>
               )}
 
-              {/* Solo mostramos Rating si no es componente */}
               {!recipe.is_component && (
                  <div className="flex items-center gap-1.5 text-sm">
                     <StarRating rating={recipe.rating} />

@@ -1,3 +1,5 @@
+// app/recipes/page.tsx
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -88,12 +90,13 @@ export default function RecipesPage() {
       
       checkWelcomeModal(user.id)
 
+      // --- FILTRO RE-ACTIVADO: Ocultar sub-recetas ---
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select("*")
         .eq("user_id", user.id)
         .is("deleted_at", null)
-        .eq("is_component", false) // <--- FILTRO ACTIVADO: Oculta las sub-recetas
+        .eq("is_component", false) // <--- AQUÍ ESTÁ EL FILTRO
         .order("created_at", { ascending: false })
 
       if (fetchError) {

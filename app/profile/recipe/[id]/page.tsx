@@ -1,6 +1,6 @@
 // app/profile/recipe/[id]/page.tsx
 
-import { redirect, notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { Button } from "@/components/ui/button"
@@ -34,9 +34,6 @@ export default async function PublicRecipePage({
   const { id } = await params
   const supabase = await createClient()
 
-  // --- FETCH PRINCIPAL ---
-  // Nota: No filtramos por 'is_public=true' aquí. 
-  // Dejamos que la política RLS (014) decida si podemos verla (si es pública O componente de pública)
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
     .select("*")
@@ -56,14 +53,13 @@ export default async function PublicRecipePage({
 
   const username = profile?.username || "Unknown"
 
-  // --- FETCH SUB-RECETAS ---
-  // Usamos la relación para obtener datos de las sub-recetas
   const { data: components } = await supabase
     .from("recipe_components")
     .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url)")
     .eq("parent_recipe_id", id)
   
-  const subRecipes = components?.map((c: any) => c.recipes) || []
+  // --- CORRECCIÓN AQUÍ: Filtrar nulos para evitar el crash ---
+  const subRecipes = components?.map((c: any) => c.recipes).filter((r: any) => r !== null) || []
 
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
 
@@ -136,7 +132,6 @@ export default async function PublicRecipePage({
               )}
             </div>
 
-            {/* --- SECCIÓN SUB-RECETAS (PÚBLICA) --- */}
             {subRecipes.length > 0 && (
               <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
@@ -168,7 +163,6 @@ export default async function PublicRecipePage({
                 </CardContent>
               </Card>
             )}
-            {/* ------------------------------------- */}
 
             <Card>
               <CardHeader>
