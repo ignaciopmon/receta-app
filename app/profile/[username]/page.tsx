@@ -37,13 +37,13 @@ export default async function PublicProfilePage({
     .eq("user_id", profile.id)
     .eq("is_public", true)
     .is("deleted_at", null)
+    .eq("is_component", false) // <--- FILTRO AÑADIDO: Ocultar sub-recetas del perfil público
     .order("created_at", { ascending: false })
 
   if (recipesError) {
     console.error("Error fetching recipes:", recipesError)
   }
   
-  // --- QUERY ACTUALIZADA: añadimos cover_url ---
   const { data: cookbooks, error: cookbooksError } = await supabase
     .from("cookbooks")
     .select("*, cover_color, cover_text, cover_url, cookbook_recipes(count)")
