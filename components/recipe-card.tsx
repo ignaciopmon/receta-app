@@ -1,8 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, Archive, PenSquare, Star } from "lucide-react"
+import { ExternalLink, Archive, PenSquare, Star, Utensils, ListOrdered } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
@@ -71,7 +71,7 @@ export function RecipeCard({
   const supabase = createClient()
 
   const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault() // Prevenir navegación si se pulsa dentro de un link
+    e.preventDefault()
     e.stopPropagation()
     
     if (!confirm("Are you sure you want to delete this recipe?")) return
@@ -129,7 +129,7 @@ export function RecipeCard({
     <Link href={`/recipes/${id}`} className="block h-full group">
       <Card className="h-full overflow-hidden flex flex-col border border-border/40 bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-border/80 p-0 gap-0 rounded-xl">
         
-        {/* Header de Imagen - Ratio corregido y overlays */}
+        {/* Header de Imagen */}
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
           {imageUrl ? (
             <Image 
@@ -140,12 +140,10 @@ export function RecipeCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-secondary/30 text-muted-foreground/20">
-               {/* Placeholder elegante */}
                <span className="font-serif text-4xl italic">Cocina</span>
             </div>
           )}
           
-          {/* Overlay degradado para que el botón de favorito resalte */}
           <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/30 to-transparent opacity-60 pointer-events-none" />
 
           <Button
@@ -166,36 +164,42 @@ export function RecipeCard({
 
         {/* Contenido */}
         <div className="flex flex-col flex-1 p-5">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-serif text-xl font-bold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                {name}
-              </h3>
-              <div className="mt-1 flex items-center gap-2">
-                 <StarRating rating={rating} />
-              </div>
+          {/* Título y Rating */}
+          <div className="mb-4">
+            <h3 className="font-serif text-xl font-bold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors mb-1">
+              {name}
+            </h3>
+            <div className="flex items-center justify-between">
+               <StarRating rating={rating} />
+               <div className="flex gap-2">
+                  {category && (
+                    <Badge variant="secondary" className="font-normal text-[10px] px-1.5 py-0 bg-secondary/50 text-secondary-foreground/80 uppercase tracking-wide">
+                      {category}
+                    </Badge>
+                  )}
+               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {category && (
-              <Badge variant="secondary" className="font-normal text-xs px-2 py-0.5 bg-secondary/50 text-secondary-foreground/80">
-                {category}
-              </Badge>
-            )}
-            {difficulty && (
-              <Badge variant="outline" className="font-normal text-xs px-2 py-0.5 border-border/60 text-muted-foreground">
-                {difficulty}
-              </Badge>
-            )}
+          {/* Stats Grid - Mismo estilo que la pública */}
+          <div className="grid grid-cols-2 gap-3 mb-4 py-3 border-y border-border/40 bg-secondary/10 -mx-1 px-1 rounded-sm">
+             <div className="flex flex-col items-center justify-center gap-0.5 border-r border-border/40">
+                <span className="text-lg font-bold text-foreground">{ingredients.length}</span>
+                <span className="text-[9px] uppercase text-muted-foreground tracking-widest flex items-center gap-1">
+                  <Utensils className="h-3 w-3" /> Ingred.
+                </span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-0.5">
+                <span className="text-lg font-bold text-foreground">{steps.length}</span>
+                <span className="text-[9px] uppercase text-muted-foreground tracking-widest flex items-center gap-1">
+                  <ListOrdered className="h-3 w-3" /> Steps
+                </span>
+             </div>
           </div>
           
-          <div className="space-y-1.5 flex-1">
-            <div className="flex justify-between text-xs text-muted-foreground uppercase tracking-wider font-medium">
-              <span>Ingredients</span>
-              <span>{ingredients.length} items</span>
-            </div>
-            <p className="text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground/70 uppercase tracking-wider font-medium mb-1">Preview</p>
+            <p className="text-sm text-muted-foreground/90 line-clamp-2 leading-relaxed italic">
               {ingredients.slice(0, 3).join(", ")}
               {ingredients.length > 3 && "..."}
             </p>
@@ -205,14 +209,12 @@ export function RecipeCard({
         {/* Footer de acciones - Minimalista */}
         <div className="p-4 pt-0 mt-auto flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
           <div className="flex gap-1">
-             {/* Botón Editar */}
             <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
               <Link href={`/recipes/edit/${id}`}>
                 <PenSquare className="h-4 w-4" />
               </Link>
             </Button>
             
-            {/* Botón Link Externo */}
             {link && (
               <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
                 <a href={link} target="_blank" rel="noopener noreferrer">
@@ -222,7 +224,6 @@ export function RecipeCard({
             )}
           </div>
 
-          {/* Botón Borrar */}
           <Button 
             variant="ghost" 
             size="icon" 
@@ -234,7 +235,7 @@ export function RecipeCard({
           </Button>
         </div>
         
-        {/* Espaciador para cuando las acciones están ocultas (para evitar saltos) */}
+        {/* Espaciador */}
         <div className="h-4 block group-hover:hidden"></div>
       </Card>
     </Link>
