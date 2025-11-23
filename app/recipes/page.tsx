@@ -10,7 +10,7 @@ import { RecipeSearch } from "@/components/recipe-search"
 import { RecipeFilters } from "@/components/recipe-filters"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { CookingPot, Search, NotebookPen, ChefHat, SlidersHorizontal, ChevronDown, X } from "lucide-react"
+import { CookingPot, Search, NotebookPen, ChefHat, SlidersHorizontal, ChevronDown } from "lucide-react"
 import { RecipeCardSkeleton } from "@/components/recipe-card-skeleton"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { WelcomeModal } from "@/components/welcome-modal"
@@ -46,7 +46,6 @@ export default function RecipesPage() {
   const [showComponents, setShowComponents] = useState(false)
   const [rating, setRating] = useState("all")
   
-  // Estado para controlar la apertura de filtros manualmente
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   
   const [isLoading, setIsLoading] = useState(true)
@@ -196,7 +195,8 @@ export default function RecipesPage() {
               <div className="h-8 w-48 bg-muted rounded-full mx-auto animate-pulse" />
               <div className="h-4 w-64 bg-muted/50 rounded-full mx-auto animate-pulse" />
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Actualizado Skeleton Grid */}
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               <RecipeCardSkeleton />
               <RecipeCardSkeleton />
               <RecipeCardSkeleton />
@@ -252,14 +252,13 @@ export default function RecipesPage() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 max-w-5xl">
+        <div className="container mx-auto px-4 max-w-7xl">
           
           {/* --- BARRA DE HERRAMIENTAS ESTABLE --- */}
           {recipes.length > 0 && (
             <div className="sticky top-20 z-30 mb-10">
               <div className="bg-background/80 backdrop-blur-xl border border-border/50 shadow-sm rounded-2xl transition-all overflow-hidden">
                 
-                {/* Fila Superior: Buscador + Toggle */}
                 <div className="flex items-center gap-3 p-2 pl-3">
                   <div className="flex-1">
                      <RecipeSearch value={searchQuery} onChange={setSearchQuery} />
@@ -280,11 +279,10 @@ export default function RecipesPage() {
                   </Button>
                 </div>
 
-                {/* Área Colapsable de Filtros */}
                 <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
                   <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                     <div className="px-4 pb-4 pt-0">
-                      <div className="h-px w-full bg-border/40 mb-4" /> {/* Separador sutil */}
+                      <div className="h-px w-full bg-border/40 mb-4" />
                       <RecipeFilters
                         category={category}
                         onCategoryChange={setCategory}
@@ -304,7 +302,7 @@ export default function RecipesPage() {
             </div>
           )}
 
-          {/* --- CONTENIDO GRID --- */}
+          {/* --- CONTENIDO GRID (ACTUALIZADO: Max 3 columnas, más gap) --- */}
           {recipes.length === 0 ? (
             <Empty className="py-16 border-none bg-transparent shadow-none">
               <EmptyMedia variant="icon" className="bg-primary/10 text-primary mb-6 p-6 rounded-full">
@@ -325,7 +323,8 @@ export default function RecipesPage() {
             </Empty>
 
           ) : filteredRecipes.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            /* CAMBIO AQUÍ: gap-8, sin xl:grid-cols-4 */
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}
@@ -376,7 +375,7 @@ export default function RecipesPage() {
                     className="rounded-full text-primary hover:bg-primary/10"
                     onClick={() => {
                       setShowComponents(true)
-                      setIsFiltersOpen(true) // Abrir filtros para mostrar que se activó
+                      setIsFiltersOpen(true)
                     }}
                   >
                     Try searching components
