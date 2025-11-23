@@ -1,3 +1,5 @@
+// components/recipe-search.tsx
+
 "use client"
 
 import { Input } from "@/components/ui/input"
@@ -10,7 +12,8 @@ interface RecipeSearchProps {
 
 export function RecipeSearch({ value, onChange }: RecipeSearchProps) {
   return (
-    <div className="relative w-full md:max-w-md group">
+    // Quitamos 'md:max-w-md' para que ocupe todo el ancho disponible en el nuevo diseño
+    <div className="relative w-full group">
       <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
       <Input
         type="search"

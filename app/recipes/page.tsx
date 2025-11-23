@@ -10,10 +10,11 @@ import { RecipeSearch } from "@/components/recipe-search"
 import { RecipeFilters } from "@/components/recipe-filters"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { CookingPot, Search, NotebookPen, ChefHat, Filter } from "lucide-react"
+import { CookingPot, Search, NotebookPen, ChefHat, SlidersHorizontal, ChevronDown, X } from "lucide-react"
 import { RecipeCardSkeleton } from "@/components/recipe-card-skeleton"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { WelcomeModal } from "@/components/welcome-modal"
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
 interface Recipe {
@@ -42,8 +43,12 @@ export default function RecipesPage() {
   const [category, setCategory] = useState("all")
   const [difficulty, setDifficulty] = useState("all")
   const [showFavorites, setShowFavorites] = useState(false)
-  const [showComponents, setShowComponents] = useState(false) // Nuevo estado para sub-recetas
+  const [showComponents, setShowComponents] = useState(false)
   const [rating, setRating] = useState("all")
+  
+  // Estado para controlar la apertura de filtros manualmente
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,7 +98,6 @@ export default function RecipesPage() {
       
       checkWelcomeModal(user.id)
 
-      // --- CAMBIO: Traemos TODO (incluido is_component = true) y filtramos en cliente ---
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select("*")
@@ -144,19 +148,10 @@ export default function RecipesPage() {
   const filterRecipes = () => {
     let filtered = [...recipes]
 
-    // 1. Filtro de Componentes (Lógica principal)
-    // Si showComponents es FALSE -> Ocultar componentes (mostrar solo recetas normales)
-    // Si showComponents es TRUE -> Mostrar SOLO componentes (o ambos, según preferencia)
-    // *Decisión UX*: Generalmente es mejor alternar. O ves recetas, o ves componentes.
-    // Pero para flexibilidad, haremos: 
-    // - OFF: Solo Recetas
-    // - ON: Recetas + Componentes (así puedes buscar "Salsa" y verla)
     if (!showComponents) {
       filtered = filtered.filter(r => r.is_component === false)
     }
-    // Si está ON, no filtramos por is_component, dejamos pasar todo.
 
-    // 2. Búsqueda de Texto
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
@@ -167,22 +162,18 @@ export default function RecipesPage() {
       )
     }
 
-    // 3. Categoría
     if (category !== "all") {
       filtered = filtered.filter((recipe) => recipe.category === category)
     }
 
-    // 4. Dificultad
     if (difficulty !== "all") {
       filtered = filtered.filter((recipe) => recipe.difficulty === difficulty)
     }
 
-    // 5. Favoritos
     if (showFavorites) {
       filtered = filtered.filter((recipe) => recipe.is_favorite)
     }
 
-    // 6. Valoración
     if (rating !== "all") {
       const minRating = Number(rating)
       if (minRating === 0) {
@@ -261,50 +252,54 @@ export default function RecipesPage() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 max-w-7xl">
+        <div className="container mx-auto px-4 max-w-5xl">
           
-          {/* --- BARRA DE HERRAMIENTAS COMPRIMIBLE --- */}
+          {/* --- BARRA DE HERRAMIENTAS ESTABLE --- */}
           {recipes.length > 0 && (
-            <div className="sticky top-20 z-30 mb-10 flex justify-center">
-              
-              {/* CONTENEDOR GROUP PARA EL HOVER */}
-              <div className="group relative w-full max-w-md hover:max-w-5xl transition-[max-width] duration-500 ease-in-out">
+            <div className="sticky top-20 z-30 mb-10">
+              <div className="bg-background/80 backdrop-blur-xl border border-border/50 shadow-sm rounded-2xl transition-all overflow-hidden">
                 
-                {/* Fondo y Borde que cambian de forma */}
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-xl border border-border/50 shadow-sm rounded-full group-hover:rounded-2xl group-hover:shadow-lg transition-all duration-500"></div>
-
-                {/* Contenido */}
-                <div className="relative p-2 group-hover:p-4 flex flex-col md:flex-row items-center gap-4 transition-all">
-                  
-                  {/* Barra de Búsqueda (Siempre visible, se expande en hover) */}
-                  <div className="w-full md:flex-1 transition-all">
-                    <RecipeSearch value={searchQuery} onChange={setSearchQuery} />
-                  </div>
-
-                  {/* Indicador visual de que hay más (solo visible cuando NO hay hover) */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground md:hidden group-hover:hidden animate-pulse">
-                    <Filter className="h-4 w-4" />
+                {/* Fila Superior: Buscador + Toggle */}
+                <div className="flex items-center gap-3 p-2 pl-3">
+                  <div className="flex-1">
+                     <RecipeSearch value={searchQuery} onChange={setSearchQuery} />
                   </div>
                   
-                  {/* Filtros (Ocultos por defecto, visibles en hover) */}
-                  <div className="w-full md:w-auto overflow-hidden max-h-0 opacity-0 group-hover:max-h-[500px] group-hover:opacity-100 transition-all duration-500 ease-in-out delay-75 flex flex-col md:flex-row gap-4">
-                    <div className="w-full h-px bg-border/50 md:hidden" /> {/* Separador móvil */}
-                    
-                    <RecipeFilters
-                      category={category}
-                      onCategoryChange={setCategory}
-                      difficulty={difficulty}
-                      onDifficultyChange={setDifficulty}
-                      showFavorites={showFavorites}
-                      onToggleFavorites={() => setShowFavorites(!showFavorites)}
-                      showComponents={showComponents}
-                      onToggleComponents={() => setShowComponents(!showComponents)}
-                      rating={rating}
-                      onRatingChange={setRating}
-                    />
-                  </div>
-
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                    className={cn(
+                      "gap-2 rounded-full px-4 h-11 font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all shrink-0 border border-transparent",
+                      isFiltersOpen && "bg-muted/50 text-foreground border-border/40"
+                    )}
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="hidden sm:inline">Filters</span>
+                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isFiltersOpen && "rotate-180")} />
+                  </Button>
                 </div>
+
+                {/* Área Colapsable de Filtros */}
+                <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+                  <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                    <div className="px-4 pb-4 pt-0">
+                      <div className="h-px w-full bg-border/40 mb-4" /> {/* Separador sutil */}
+                      <RecipeFilters
+                        category={category}
+                        onCategoryChange={setCategory}
+                        difficulty={difficulty}
+                        onDifficultyChange={setDifficulty}
+                        showFavorites={showFavorites}
+                        onToggleFavorites={() => setShowFavorites(!showFavorites)}
+                        showComponents={showComponents}
+                        onToggleComponents={() => setShowComponents(!showComponents)}
+                        rating={rating}
+                        onRatingChange={setRating}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </div>
           )}
@@ -359,9 +354,9 @@ export default function RecipesPage() {
               </EmptyTitle>
               <EmptyDescription className="max-w-md">
                 Try adjusting your filters or search terms to find what you're looking for.
-                {showComponents ? "" : " (Hidden components are not included in search)"}
+                {!showComponents && " (Hidden components are not included in search)"}
               </EmptyDescription>
-              <div className="flex gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <Button
                   variant="outline"
                   className="rounded-full border-dashed"
@@ -379,7 +374,10 @@ export default function RecipesPage() {
                    <Button
                     variant="ghost"
                     className="rounded-full text-primary hover:bg-primary/10"
-                    onClick={() => setShowComponents(true)}
+                    onClick={() => {
+                      setShowComponents(true)
+                      setIsFiltersOpen(true) // Abrir filtros para mostrar que se activó
+                    }}
                   >
                     Try searching components
                   </Button>
