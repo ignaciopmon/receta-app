@@ -32,14 +32,21 @@ export default async function EditRecipePage({
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-background">
       <RecipeFormHeader />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto py-8 px-4 max-w-3xl">
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2 text-balance">Edit Recipe</h1>
-            <p className="text-muted-foreground text-lg">Update your recipe details</p>
+      
+      <main className="flex-1 w-full pb-20">
+        <div className="container mx-auto px-4 py-12 max-w-3xl">
+          
+          <div className="text-center mb-10 space-y-2">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground tracking-tight">
+              Edit Recipe
+            </h1>
+            <p className="text-muted-foreground text-lg font-light">
+              Refining "{recipe.name}"
+            </p>
           </div>
+
           <RecipeForm
             recipeId={recipe.id}
             initialName={recipe.name}
@@ -54,7 +61,6 @@ export default async function EditRecipePage({
             initialPrepTime={recipe.prep_time}
             initialCookTime={recipe.cook_time}
             initialServings={recipe.servings}
-            // --- PASAR ESTADO DE COMPONENTE ---
             initialIsComponent={recipe.is_component} 
           />
         </div>
