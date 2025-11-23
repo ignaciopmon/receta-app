@@ -8,14 +8,13 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
-import { PenSquare, ExternalLink, Share2, Globe, XCircle, Loader2 } from "lucide-react"
+import { PenSquare, ExternalLink, Share2, Globe, XCircle, Loader2, Printer } from "lucide-react"
 import { AddRecipeToCookbook } from "@/components/AddRecipeToCookbook"
 
 interface RecipeActionsProps {
   recipeId: string
   initialIsPublic: boolean
   link: string | null
-  // --- NUEVO PROP ---
   isComponent?: boolean
 }
 
@@ -80,12 +79,26 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
   }
 
   return (
-    <div className="flex gap-3 flex-shrink-0">
+    <div className="flex gap-3 flex-shrink-0 flex-wrap justify-center">
       
-      {/* Botón para añadir a Cookbook (siempre visible) */}
+      {/* Botón para añadir a Cookbook */}
       <AddRecipeToCookbook recipeId={recipeId} />
+
+      {/* --- BOTÓN DE IMPRESIÓN (NUEVO) --- */}
+      <Button asChild variant="outline" className="hidden md:inline-flex" title="Print Recipe">
+        <Link href={`/recipes/${recipeId}/print`}>
+          <Printer className="mr-2 h-4 w-4" />
+          Print
+        </Link>
+      </Button>
+      {/* Versión móvil (icono solo) */}
+      <Button asChild variant="outline" size="icon" className="md:hidden" title="Print Recipe">
+        <Link href={`/recipes/${recipeId}/print`}>
+          <Printer className="h-4 w-4" />
+        </Link>
+      </Button>
+      {/* --------------------------------- */}
       
-      {/* --- BOTONES DE PUBLICACIÓN: OCULTOS SI ES COMPONENTE --- */}
       {!isComponent && (
         <>
           {isPublic ? (
@@ -119,7 +132,6 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
           )}
         </>
       )}
-      {/* ------------------------------------------------------ */}
 
       <Button asChild variant="outline" size="icon" className="md:hidden">
         <Link href={`/recipes/edit/${recipeId}`}>
