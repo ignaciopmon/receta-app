@@ -4,15 +4,14 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Clock, Users, Star, Layers, Utensils, Flame, ChefHat } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Toaster } from "@/components/ui/toaster"
 import { RecipeActions } from "@/components/recipe-actions"
+import { CookingModeTrigger } from "@/components/cooking-mode-trigger" // IMPORTAR AQUÍ
 import { cn } from "@/lib/utils"
 
 // --- Componentes Auxiliares ---
@@ -144,8 +143,13 @@ export default async function RecipeDetailPage({
             <MetaItem icon={Users} label="Serves" value={recipe.servings ? `${recipe.servings} pp` : null} />
           </div>
 
-          {/* Acciones */}
-          <div className="flex justify-center">
+          {/* --- BOTONES DE ACCIÓN (AÑADIDO: MODO COCINA) --- */}
+          <div className="flex flex-col items-center gap-6">
+             {/* Botón Gigante Start Cooking */}
+             <div className="animate-in zoom-in-95 duration-500 delay-300">
+                <CookingModeTrigger recipe={recipe} />
+             </div>
+
              <RecipeActions
               recipeId={recipe.id}
               initialIsPublic={recipe.is_public}
@@ -155,7 +159,7 @@ export default async function RecipeDetailPage({
           </div>
         </div>
 
-        {/* --- IMAGEN PRINCIPAL (Cinematográfica) --- */}
+        {/* --- IMAGEN PRINCIPAL --- */}
         <div className="w-full max-w-5xl mx-auto px-4 mb-12">
           <div className="relative aspect-video md:aspect-[21/9] w-full overflow-hidden rounded-xl shadow-lg border border-border/30 bg-muted group">
             {recipe.image_url ? (
@@ -175,14 +179,13 @@ export default async function RecipeDetailPage({
           </div>
         </div>
 
-        {/* --- CONTENIDO (Layout Clásico) --- */}
+        {/* --- CONTENIDO --- */}
         <div className="container max-w-5xl mx-auto px-4 pb-20">
           <div className="grid gap-12 lg:grid-cols-[320px_1fr] items-start">
             
             {/* COLUMNA IZQUIERDA: INGREDIENTES */}
             <aside className="space-y-8">
               
-              {/* Sub-recetas (Componentes) */}
               {subRecipes.length > 0 && (
                 <Card className="border-primary/20 bg-primary/5 shadow-none overflow-hidden">
                   <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2 text-primary font-serif font-bold">
@@ -209,7 +212,6 @@ export default async function RecipeDetailPage({
                 </Card>
               )}
 
-              {/* Lista de Ingredientes */}
               <div>
                 <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border flex items-center justify-between">
                   <span>Ingredients</span>
@@ -234,7 +236,6 @@ export default async function RecipeDetailPage({
               <div className="space-y-10">
                 {recipe.steps.map((step: string, index: number) => (
                   <div key={index} className="group relative pl-4">
-                    {/* Número grande y elegante */}
                     <div className="absolute -left-4 -top-2 text-6xl font-serif font-bold text-muted-foreground/10 select-none group-hover:text-primary/10 transition-colors">
                       {index + 1}
                     </div>
