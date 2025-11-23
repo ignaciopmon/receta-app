@@ -4,15 +4,15 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { RecipeHeader } from "@/components/recipe-header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card" // <-- AÑADIDA ESTA LÍNEA QUE FALTABA
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Clock, Users, Star, Layers, Utensils, Flame, ChefHat } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Toaster } from "@/components/ui/toaster"
 import { RecipeActions } from "@/components/recipe-actions"
-import { CookingModeTrigger } from "@/components/cooking-mode-trigger"
 import { cn } from "@/lib/utils"
 
 // --- Componentes Auxiliares ---
@@ -144,13 +144,8 @@ export default async function RecipeDetailPage({
             <MetaItem icon={Users} label="Serves" value={recipe.servings ? `${recipe.servings} pp` : null} />
           </div>
 
-          {/* --- BOTONES DE ACCIÓN --- */}
-          <div className="flex flex-col items-center gap-6">
-             {/* Botón Gigante Start Cooking */}
-             <div className="animate-in zoom-in-95 duration-500 delay-300">
-                <CookingModeTrigger recipe={recipe} />
-             </div>
-
+          {/* Acciones */}
+          <div className="flex justify-center animate-in zoom-in-95 duration-500 delay-300">
              <RecipeActions
               recipeId={recipe.id}
               initialIsPublic={recipe.is_public}
@@ -251,7 +246,7 @@ export default async function RecipeDetailPage({
                 ))}
               </div>
 
-              <div className="my-12 border-t border-border/40" />
+              <Separator className="my-12" />
               
               <div className="flex justify-center">
                 <p className="text-center text-muted-foreground italic font-serif">
