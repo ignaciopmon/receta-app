@@ -243,9 +243,18 @@ export default function RecipesPage() {
                <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">My Kitchen</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 tracking-tight text-balance cursor-default">
-              Your <span className="hover:underline decoration-4 decoration-primary/30 hover:decoration-primary underline-offset-4 transition-all">Cocina</span>
+            {/* --- TÍTULO CON EFECTO WOW --- */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 tracking-tight text-balance">
+              Your{' '}
+              {/* Usamos 'group' en el span contenedor para coordinar el hover */}
+              <span className="group relative inline-block cursor-pointer transition-transform duration-300 ease-out hover:-rotate-3 hover:scale-105">
+                {/* El texto está por encima (z-10) */}
+                <span className="relative z-10">Cocina</span>
+                {/* El resaltador imperfecto detrás (-z-10) */}
+                <span className="absolute inset-0 -z-10 block rounded-sm bg-yellow-300/60 dark:bg-yellow-500/50 -skew-y-3 scale-x-0 transition-transform duration-500 ease-out origin-left group-hover:scale-x-110 group-hover:rotate-2"></span>
+              </span>
             </h1>
+            
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {realRecipeCount > 0
                 ? `You have created ${realRecipeCount} ${realRecipeCount === 1 ? "recipe" : "recipes"} in your personal kitchen.`
