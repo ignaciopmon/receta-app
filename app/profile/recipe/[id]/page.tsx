@@ -8,12 +8,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-import { ExternalLink, ArrowLeft, User, Clock, Users, Star, Layers, Utensils, Flame, ChefHat } from "lucide-react"
+// Añadimos 'Printer' a las importaciones
+import { ExternalLink, ArrowLeft, User, Clock, Users, Star, Layers, Utensils, Flame, ChefHat, Printer } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
-// --- Componentes Auxiliares (Reutilizados para consistencia) ---
+// --- Componentes Auxiliares ---
 
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
@@ -140,17 +141,26 @@ export default async function PublicRecipePage({
             {recipe.name}
           </h1>
 
-          {/* Autor y Link Externo */}
-          <div className="flex items-center justify-center gap-4 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+          {/* Autor y Acciones (Link + Print) */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 px-3 py-1 rounded-full border border-border/30">
               <User className="h-4 w-4" />
               <span>Recipe by <strong className="text-foreground">@{username}</strong></span>
             </div>
             
+            {/* Botón de Imprimir Público */}
+            <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
+              <Link href={`/profile/recipe/${id}/print`}>
+                <span className="text-xs font-medium">Print</span>
+                <Printer className="h-3 w-3" />
+              </Link>
+            </Button>
+
+            {/* Enlace Externo si existe */}
             {recipe.link && (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
                 <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                  <span className="text-xs font-medium">View Source</span>
+                  <span className="text-xs font-medium">Source</span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </Button>

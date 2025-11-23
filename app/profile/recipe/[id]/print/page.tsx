@@ -1,10 +1,10 @@
-// app/recipes/[id]/print/page.tsx
+// app/profile/recipe/[id]/print/page.tsx
 
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { PrintView } from "@/components/print-view" // Importamos el componente cliente
+import { PrintView } from "@/components/print-view" // Reutilizamos el mismo componente
 
-export default async function PrintRecipePage({
+export default async function PublicPrintRecipePage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -12,11 +12,13 @@ export default async function PrintRecipePage({
   const { id } = await params
   const supabase = await createClient()
 
-  // Obtener receta
+  // Obtener receta pública
   const { data: recipe, error } = await supabase
     .from("recipes")
     .select("*")
     .eq("id", id)
+    .eq("is_public", true) 
+    .is("deleted_at", null)
     .single()
 
   if (error || !recipe) {
@@ -30,9 +32,13 @@ export default async function PrintRecipePage({
     .eq("id", recipe.user_id)
     .single()
 
-  const username = profile?.username || "Chef"
+  const username = profile?.username || "Unknown Chef"
 
   return (
-    <PrintView recipe={recipe} username={username} />
+    <PrintView 
+      recipe={recipe} 
+      username={username} 
+      isPublicCollection={true} 
+    />
   )
 }
