@@ -1,8 +1,10 @@
+// components/recipe-filters.tsx
+
 "use client"
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, SlidersHorizontal } from "lucide-react"
+import { Star, SlidersHorizontal, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface RecipeFiltersProps {
@@ -12,6 +14,10 @@ interface RecipeFiltersProps {
   onDifficultyChange: (value: string) => void
   showFavorites: boolean
   onToggleFavorites: () => void
+  // --- NUEVOS PROPS ---
+  showComponents: boolean
+  onToggleComponents: () => void
+  // --------------------
   rating: string
   onRatingChange: (value: string) => void
 }
@@ -23,20 +29,20 @@ export function RecipeFilters({
   onDifficultyChange,
   showFavorites,
   onToggleFavorites,
+  showComponents,
+  onToggleComponents,
   rating,
   onRatingChange,
 }: RecipeFiltersProps) {
   
-  // Estilo base para los triggers de los selectores
-  const triggerClass = "w-full sm:w-[140px] h-9 rounded-full border-border/60 bg-background/50 backdrop-blur-sm text-xs font-medium hover:bg-accent/50 hover:border-border transition-all focus:ring-0"
+  const triggerClass = "w-full sm:w-[130px] h-8 rounded-full border-border/40 bg-background/50 text-xs font-medium hover:bg-accent/50 hover:border-border transition-all focus:ring-0 shadow-none"
 
   return (
-    <div className="flex flex-col sm:flex-row sm:flex-wrap items-center gap-3 w-full sm:w-auto">
+    <div className="flex flex-col sm:flex-row sm:flex-wrap items-center gap-2 w-full sm:w-auto justify-center md:justify-end">
       
-      {/* Icono decorativo en móvil, oculto en desktop para limpieza */}
-      <div className="flex items-center gap-2 self-start sm:hidden text-muted-foreground mb-1">
+      <div className="flex items-center gap-2 self-start sm:hidden text-muted-foreground mb-1 w-full">
         <SlidersHorizontal className="h-3 w-3" />
-        <span className="text-xs uppercase tracking-wider font-semibold">Filters</span>
+        <span className="text-xs uppercase tracking-wider font-semibold">Refine</span>
       </div>
 
       <Select value={category} onValueChange={onCategoryChange}>
@@ -51,6 +57,10 @@ export function RecipeFilters({
           <SelectItem value="dessert">Dessert</SelectItem>
           <SelectItem value="snack">Snack</SelectItem>
           <SelectItem value="beverage">Beverage</SelectItem>
+          {/* Opciones específicas de componentes por si se quieren filtrar */}
+          <SelectItem value="sauce">Sauces</SelectItem>
+          <SelectItem value="glaze">Glazes</SelectItem>
+          <SelectItem value="dough">Doughs</SelectItem>
         </SelectContent>
       </Select>
 
@@ -71,28 +81,42 @@ export function RecipeFilters({
           <SelectValue placeholder="Rating" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Ratings</SelectItem>
+          <SelectItem value="all">Any Rating</SelectItem>
           <SelectItem value="5">5 Stars</SelectItem>
           <SelectItem value="4">4+ Stars</SelectItem>
           <SelectItem value="3">3+ Stars</SelectItem>
-          <SelectItem value="2">2+ Stars</SelectItem>
-          <SelectItem value="1">1+ Star</SelectItem>
           <SelectItem value="0">Unrated</SelectItem>
         </SelectContent>
       </Select>
 
-      <Button 
-        variant={showFavorites ? "secondary" : "outline"} 
-        size="sm" 
-        onClick={onToggleFavorites} 
-        className={cn(
-          "w-full sm:w-auto rounded-full h-9 px-4 gap-1.5 border-border/60 bg-background/50 backdrop-blur-sm text-xs font-medium hover:bg-accent/50 hover:border-border transition-all",
-          showFavorites && "bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-900/30 dark:text-yellow-400"
-        )}
-      >
-        <Star className={cn("h-3.5 w-3.5", showFavorites ? "fill-current" : "text-muted-foreground")} />
-        <span>Favorites</span>
-      </Button>
+      <div className="flex gap-2 w-full sm:w-auto">
+        <Button 
+          variant={showFavorites ? "secondary" : "outline"} 
+          size="sm" 
+          onClick={onToggleFavorites} 
+          className={cn(
+            "flex-1 sm:flex-none rounded-full h-8 px-3 gap-1.5 border-border/40 bg-background/50 text-xs font-medium hover:bg-accent/50 hover:border-border transition-all shadow-none",
+            showFavorites && "bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-900/30 dark:text-yellow-400"
+          )}
+        >
+          <Star className={cn("h-3 w-3", showFavorites ? "fill-current" : "text-muted-foreground")} />
+          <span>Favorites</span>
+        </Button>
+
+        {/* --- BOTÓN DE COMPONENTES --- */}
+        <Button 
+          variant={showComponents ? "secondary" : "outline"} 
+          size="sm" 
+          onClick={onToggleComponents} 
+          className={cn(
+            "flex-1 sm:flex-none rounded-full h-8 px-3 gap-1.5 border-border/40 bg-background/50 text-xs font-medium hover:bg-accent/50 hover:border-border transition-all shadow-none",
+            showComponents && "bg-primary/10 border-primary/20 text-primary hover:bg-primary/15"
+          )}
+        >
+          <Layers className={cn("h-3 w-3", showComponents ? "text-primary" : "text-muted-foreground")} />
+          <span>Components</span>
+        </Button>
+      </div>
     </div>
   )
 }
