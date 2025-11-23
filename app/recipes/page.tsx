@@ -57,6 +57,9 @@ export default function RecipesPage() {
 
   const supabase = createClient()
 
+  // Calcular el conteo de recetas reales (excluyendo componentes)
+  const realRecipeCount = recipes.filter(r => !r.is_component).length
+
   useEffect(() => {
     fetchData()
 
@@ -195,7 +198,6 @@ export default function RecipesPage() {
               <div className="h-8 w-48 bg-muted rounded-full mx-auto animate-pulse" />
               <div className="h-4 w-64 bg-muted/50 rounded-full mx-auto animate-pulse" />
             </div>
-            {/* Actualizado Skeleton Grid */}
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               <RecipeCardSkeleton />
               <RecipeCardSkeleton />
@@ -241,12 +243,12 @@ export default function RecipesPage() {
                <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">My Kitchen</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 tracking-tight text-balance">
-              Your Collection
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 tracking-tight text-balance cursor-default">
+              Your <span className="hover:underline decoration-4 decoration-primary/30 hover:decoration-primary underline-offset-4 transition-all">Cocina</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              {recipes.length > 0
-                ? `You have curated ${recipes.length} items in your personal cookbook.`
+              {realRecipeCount > 0
+                ? `You have created ${realRecipeCount} ${realRecipeCount === 1 ? "recipe" : "recipes"} in your personal kitchen.`
                 : "Start your culinary journey by adding your first recipe."}
             </p>
           </div>
@@ -302,7 +304,7 @@ export default function RecipesPage() {
             </div>
           )}
 
-          {/* --- CONTENIDO GRID (ACTUALIZADO: Max 3 columnas, más gap) --- */}
+          {/* --- CONTENIDO GRID --- */}
           {recipes.length === 0 ? (
             <Empty className="py-16 border-none bg-transparent shadow-none">
               <EmptyMedia variant="icon" className="bg-primary/10 text-primary mb-6 p-6 rounded-full">
@@ -323,7 +325,6 @@ export default function RecipesPage() {
             </Empty>
 
           ) : filteredRecipes.length > 0 ? (
-            /* CAMBIO AQUÍ: gap-8, sin xl:grid-cols-4 */
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
