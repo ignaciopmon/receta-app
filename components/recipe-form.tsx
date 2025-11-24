@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Plus, X, Loader2, CookingPot, Layers, Check, GripVertical, Image as ImageIcon, UploadCloud, Utensils, ListOrdered, Trash2 } from "lucide-react" 
+import { 
+  Plus, X, Loader2, CookingPot, Layers, Check, 
+  GripVertical, Image as ImageIcon, UploadCloud, 
+  Utensils, ListOrdered, Trash2, ArrowUp, ArrowDown 
+} from "lucide-react" 
 import { upload } from "@vercel/blob/client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -28,6 +32,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile" // Asegúrate de que este hook existe
 
 // --- DND KIT IMPORTS ---
 import {
@@ -79,25 +84,35 @@ interface FormItem {
 
 const generateId = () => Math.random().toString(36).substr(2, 9)
 
-// --- COMPONENTE FILA ARRASTRABLE (Refinado para ancho completo y MÓVIL) ---
+// --- COMPONENTE FILA ARRASTRABLE MEJORADO PARA MÓVIL ---
 function SortableRow({ 
   id, 
   value, 
   onChange, 
   onRemove, 
+  onMoveUp, // Nueva prop
+  onMoveDown, // Nueva prop
+  isFirst, // Nueva prop
+  isLast, // Nueva prop
   placeholder, 
   isTextArea = false,
   index,
-  canRemove 
+  canRemove,
+  isMobile
 }: {
   id: string
   value: string
   onChange: (val: string) => void
   onRemove: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+  isFirst: boolean
+  isLast: boolean
   placeholder: string
   isTextArea?: boolean
   index?: number
   canRemove: boolean
+  isMobile: boolean
 }) {
   const {
     attributes,
@@ -116,51 +131,78 @@ function SortableRow({
   }
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("flex gap-4 items-start group relative py-2", isDragging && "opacity-50 bg-muted/30 rounded-md")}>
-      {/* Handle - Visible siempre en móvil, solo hover en desktop */}
-      <button
-        type="button"
-        className={cn(
-          "mt-3 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-foreground transition-colors outline-none p-1",
-          // MEJORA MÓVIL: opacity-100 por defecto en móvil, opacity-0 en desktop hasta hover
-          "opacity-100 md:opacity-0 md:group-hover:opacity-100",
-          isTextArea && "mt-4"
+    <div ref={setNodeRef} style={style} className={cn("flex gap-2 md:gap-4 items-start group relative py-2", isDragging && "opacity-50 bg-muted/30 rounded-md")}>
+      
+      {/* CONTROLES DE ORDENACIÓN (Adaptativos) */}
+      <div className="flex flex-col gap-1 mt-1 shrink-0">
+        {isMobile ? (
+          // Versión MÓVIL: Flechas explícitas
+          <div className="flex flex-col gap-2 bg-muted/30 p-1 rounded-md">
+            <button
+              type="button"
+              onClick={onMoveUp}
+              disabled={isFirst}
+              className="p-2 rounded-sm hover:bg-background disabled:opacity-20 text-muted-foreground"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onMoveDown}
+              disabled={isLast}
+              className="p-2 rounded-sm hover:bg-background disabled:opacity-20 text-muted-foreground"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          // Versión DESKTOP: Handle de arrastre
+          <button
+            type="button"
+            className={cn(
+              "mt-2 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-foreground transition-colors outline-none p-1 opacity-0 group-hover:opacity-100",
+              isTextArea && "mt-4"
+            )}
+            {...attributes}
+            {...listeners}
+            title="Drag to reorder"
+          >
+            <GripVertical className="h-5 w-5" />
+          </button>
         )}
-        {...attributes}
-        {...listeners}
-        title="Drag to reorder"
-      >
-        <GripVertical className="h-5 w-5" />
-      </button>
+      </div>
 
-      <div className="flex-1 relative">
+      {/* INPUTS */}
+      <div className="flex-1 relative min-w-0"> {/* min-w-0 evita desbordes en flex */}
         {isTextArea ? (
-          <div className="flex gap-4 items-start">
-             {/* Número de paso grande y elegante */}
-             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground font-serif font-bold text-lg mt-1 border border-border/40 shadow-sm">
+          <div className="flex gap-3 items-start">
+             <div className="hidden md:flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground font-serif font-bold text-sm mt-1 border border-border/40 shadow-sm">
                 {(index ?? 0) + 1}
              </div>
              <Textarea
                 placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                rows={3} // Más espacio por defecto para escribir
-                className="flex-1 bg-transparent border-0 border-b border-border/40 rounded-none px-0 py-2 focus-visible:ring-0 focus-visible:border-primary transition-all resize-none text-lg leading-relaxed placeholder:text-muted-foreground/40"
+                rows={3}
+                // text-base en móvil para evitar zoom
+                className="flex-1 bg-transparent border-0 border-b border-border/40 rounded-none px-0 py-2 focus-visible:ring-0 focus-visible:border-primary transition-all resize-none text-base md:text-lg leading-relaxed placeholder:text-muted-foreground/40"
               />
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="h-1.5 w-1.5 rounded-full bg-primary/40 mt-0.5 shrink-0" />
+            <div className="hidden md:block h-1.5 w-1.5 rounded-full bg-primary/40 mt-0.5 shrink-0" />
             <Input
               placeholder={placeholder}
               value={value}
               onChange={(e) => onChange(e.target.value)}
+              // text-base en móvil
               className="bg-transparent border-0 border-b border-border/40 rounded-none px-0 h-11 focus-visible:ring-0 focus-visible:border-primary transition-all text-base placeholder:text-muted-foreground/40"
             />
           </div>
         )}
       </div>
 
+      {/* BOTÓN ELIMINAR (Más accesible en móvil) */}
       {canRemove && (
         <Button 
           type="button" 
@@ -168,14 +210,13 @@ function SortableRow({
           size="icon" 
           onClick={onRemove}
           className={cn(
-            "text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-all",
-            // MEJORA MÓVIL: opacity-100 por defecto en móvil, opacity-0 en desktop hasta hover
-            "opacity-100 md:opacity-0 md:group-hover:opacity-100",
+            "text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-all shrink-0",
+            !isMobile && "opacity-0 group-hover:opacity-100", // En móvil siempre visible o visible al foco
             isTextArea && "mt-2"
           )}
           title="Remove item"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-5 w-5 md:h-4 md:w-4" />
         </Button>
       )}
     </div>
@@ -204,6 +245,7 @@ export function RecipeForm({
   const supabase = createClient()
   const isEditing = !!recipeId
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isMobile = useIsMobile() // Detectamos si es móvil
 
   const [name, setName] = useState(initialName)
   
@@ -253,6 +295,7 @@ export function RecipeForm({
     })
   )
 
+  // --- LÓGICA DE MOVIMIENTO ---
   function handleDragEndIngredients(event: DragEndEvent) {
     const { active, over } = event
     if (over && active.id !== over.id) {
@@ -262,6 +305,16 @@ export function RecipeForm({
         return arrayMove(items, oldIndex, newIndex)
       })
     }
+  }
+
+  function moveItem(type: 'ingredients' | 'steps', index: number, direction: 'up' | 'down') {
+    const setter = type === 'ingredients' ? setIngredients : setSteps
+    
+    setter((items) => {
+      const newIndex = direction === 'up' ? index - 1 : index + 1
+      if (newIndex < 0 || newIndex >= items.length) return items
+      return arrayMove(items, index, newIndex)
+    })
   }
 
   function handleDragEndSteps(event: DragEndEvent) {
@@ -275,6 +328,8 @@ export function RecipeForm({
     }
   }
 
+  // ... (Resto de useEffects y funciones de carga iguales) ...
+  // (Se mantienen iguales para brevedad, las añado completas en el bloque final)
   useEffect(() => {
     if (isComponent) {
       if (!["sauce", "glaze", "cream", "filling", "dough", "topping", "seasoning", "other_component"].includes(category)) {
@@ -497,86 +552,69 @@ export function RecipeForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
+    <form onSubmit={handleSubmit} className="space-y-12 pb-24">
       
-      {/* --- 1. CABECERA VISUAL (Imagen y Título) --- */}
+      {/* --- 1. CABECERA VISUAL --- */}
       <div className="space-y-8">
-        {/* Image Upload */}
         <div 
           onClick={triggerFileInput}
           className={cn(
-            "relative aspect-[21/9] w-full overflow-hidden rounded-xl border border-dashed border-border/60 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group flex flex-col items-center justify-center text-muted-foreground",
+            "relative aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden rounded-xl border border-dashed border-border/60 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group flex flex-col items-center justify-center text-muted-foreground",
             imagePreview && "border-none bg-transparent shadow-sm"
           )}
         >
-          <Input 
-            id="image" 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={fileInputRef}
-            onChange={handleImageChange} 
-          />
+          <Input id="image" type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageChange} />
           
           {imagePreview ? (
             <>
               <Image src={imagePreview} alt="Preview" fill className="object-cover" />
               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <div className="bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md flex items-center gap-2 transform scale-95 group-hover:scale-100 transition-transform">
-                  <ImageIcon className="h-4 w-4" />
-                  Change Cover
+                  <ImageIcon className="h-4 w-4" /> Change Photo
                 </div>
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-3 right-3 rounded-full h-8 w-8 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={removeImage}
-              >
+              <Button type="button" variant="destructive" size="icon" className="absolute top-3 right-3 rounded-full h-8 w-8 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage}>
                 <X className="h-4 w-4" />
               </Button>
             </>
           ) : (
-            <div className="flex flex-col items-center gap-3 p-6 transition-transform duration-300 group-hover:scale-105">
-              <div className="p-4 bg-background rounded-full shadow-sm border border-border/50">
+            <div className="flex flex-col items-center gap-3 p-6">
+              <div className="p-4 bg-background rounded-full shadow-sm border border-border/50 group-hover:scale-110 transition-transform">
                 <UploadCloud className="h-8 w-8 text-primary/60" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-foreground">Add a cover photo</p>
-                <p className="text-xs text-muted-foreground mt-1">Drag and drop or click to browse</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Nombre */}
-        <div className="space-y-2">
+        <div className="space-y-2 px-1">
           <Input
             id="name"
             placeholder="Recipe Title"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="text-4xl md:text-5xl font-serif font-bold border-none px-0 py-4 h-auto placeholder:text-muted-foreground/30 bg-transparent focus-visible:ring-0 shadow-none text-center placeholder:font-serif"
+            // Ajuste de tamaño de texto para móvil
+            className="text-3xl md:text-5xl font-serif font-bold border-none px-0 py-4 h-auto placeholder:text-muted-foreground/30 bg-transparent focus-visible:ring-0 shadow-none text-center placeholder:font-serif"
           />
           <div className="h-px w-24 bg-border mx-auto"></div>
         </div>
       </div>
 
-      {/* --- 2. METADATOS (Grid limpio) --- */}
+      {/* --- 2. METADATOS --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 px-2">
         <div className="space-y-6">
           <h3 className="font-serif text-lg font-semibold text-foreground/80 flex items-center gap-2 uppercase tracking-wide text-xs">
-            <CookingPot className="h-4 w-4" />
-            Essentials
+            <CookingPot className="h-4 w-4" /> Essentials
           </h3>
           
           <div className="grid gap-6">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger id="category" className="bg-background/50 border-border/60 h-10">
+                <SelectTrigger id="category" className="bg-background/50 border-border/60 h-12 text-base md:text-sm">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -608,7 +646,7 @@ export function RecipeForm({
             <div className="space-y-2">
               <Label htmlFor="difficulty">Difficulty</Label>
               <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger id="difficulty" className="bg-background/50 border-border/60 h-10">
+                <SelectTrigger id="difficulty" className="bg-background/50 border-border/60 h-12 text-base md:text-sm">
                   <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
                 <SelectContent>
@@ -623,20 +661,20 @@ export function RecipeForm({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="prepTime">Prep (min)</Label>
-                  <Input id="prepTime" type="number" min="0" value={prepTime} onChange={(e) => setPrepTime(e.target.value)} className="bg-background/50 border-border/60" />
+                  <Input id="prepTime" type="number" inputMode="numeric" min="0" value={prepTime} onChange={(e) => setPrepTime(e.target.value)} className="bg-background/50 border-border/60 h-12 text-base md:text-sm" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cookTime">Cook (min)</Label>
-                  <Input id="cookTime" type="number" min="0" value={cookTime} onChange={(e) => setCookTime(e.target.value)} className="bg-background/50 border-border/60" />
+                  <Input id="cookTime" type="number" inputMode="numeric" min="0" value={cookTime} onChange={(e) => setCookTime(e.target.value)} className="bg-background/50 border-border/60 h-12 text-base md:text-sm" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="servings">Servings</Label>
-                  <Input id="servings" type="number" min="1" value={servings} onChange={(e) => setServings(e.target.value)} className="bg-background/50 border-border/60" />
+                  <Input id="servings" type="number" inputMode="numeric" min="1" value={servings} onChange={(e) => setServings(e.target.value)} className="bg-background/50 border-border/60 h-12 text-base md:text-sm" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="rating">Rating</Label>
                   <Select value={String(rating)} onValueChange={(v) => setRating(Number(v))}>
-                    <SelectTrigger id="rating" className="bg-background/50 border-border/60">
+                    <SelectTrigger id="rating" className="bg-background/50 border-border/60 h-12 text-base md:text-sm">
                       <SelectValue placeholder="Rating" />
                     </SelectTrigger>
                     <SelectContent>
@@ -656,30 +694,29 @@ export function RecipeForm({
 
         <div className="space-y-6">
           <h3 className="font-serif text-lg font-semibold text-foreground/80 flex items-center gap-2 uppercase tracking-wide text-xs">
-            <Layers className="h-4 w-4" />
-            Settings
+            <Layers className="h-4 w-4" /> Settings
           </h3>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
               <div className="space-y-0.5">
-                <Label htmlFor="isFavorite" className="text-base cursor-pointer font-medium">Favorite</Label>
-                <p className="text-xs text-muted-foreground">Pin to top of your list</p>
+                <Label htmlFor="isFavorite" className="text-base font-medium">Favorite</Label>
+                <p className="text-xs text-muted-foreground">Pin to top of list</p>
               </div>
               <Switch id="isFavorite" checked={isFavorite} onCheckedChange={setIsFavorite} />
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
               <div className="space-y-0.5">
-                <Label htmlFor="isComponent" className="text-base cursor-pointer font-medium">Component Mode</Label>
-                <p className="text-xs text-muted-foreground">Mark as a sub-recipe (e.g. Sauce)</p>
+                <Label htmlFor="isComponent" className="text-base font-medium">Component Mode</Label>
+                <p className="text-xs text-muted-foreground">Mark as sub-recipe</p>
               </div>
               <Switch id="isComponent" checked={isComponent} onCheckedChange={setIsComponent} />
             </div>
 
             <div className="space-y-2 pt-2">
               <Label htmlFor="link">Source Link</Label>
-              <Input id="link" type="url" placeholder="https://example.com..." value={link} onChange={(e) => setLink(e.target.value)} className="bg-background/50 border-border/60" />
+              <Input id="link" type="url" placeholder="https://..." value={link} onChange={(e) => setLink(e.target.value)} className="bg-background/50 border-border/60 h-12 text-base md:text-sm" />
             </div>
           </div>
         </div>
@@ -687,12 +724,11 @@ export function RecipeForm({
 
       <Separator className="my-8 opacity-50" />
 
-      {/* --- 3. INGREDIENTES (Bloque Completo) --- */}
-      <div className="space-y-6 max-w-4xl mx-auto">
+      {/* --- 3. INGREDIENTES (Lineal con Flechas en Móvil) --- */}
+      <div className="space-y-6 max-w-4xl mx-auto px-2">
         <div className="flex items-center justify-between">
           <h3 className="font-serif text-2xl font-bold flex items-center gap-2">
-            <Utensils className="h-5 w-5 text-primary" />
-            Ingredients
+            <Utensils className="h-5 w-5 text-primary" /> Ingredients
           </h3>
           {!isComponent && (
              <Button 
@@ -700,15 +736,14 @@ export function RecipeForm({
                 variant="outline" 
                 size="sm" 
                 onClick={() => setIsComponentSearchOpen(true)} 
-                className="rounded-full h-8 text-xs border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                className="rounded-full h-9 text-xs border-dashed border-primary/40 text-primary hover:bg-primary/5"
               >
-                <Plus className="mr-1.5 h-3 w-3" />
-                Import Component
+                <Plus className="mr-1.5 h-3 w-3" /> Import
               </Button>
           )}
         </div>
 
-        {/* Lista de componentes vinculados */}
+        {/* Componentes Vinculados */}
         {!isComponent && linkedComponents.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4 p-4 bg-secondary/20 rounded-lg border border-border/40">
             <p className="w-full text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Linked Components</p>
@@ -732,15 +767,22 @@ export function RecipeForm({
               onDragEnd={handleDragEndIngredients}
             >
               <SortableContext items={ingredients} strategy={verticalListSortingStrategy}>
-                {ingredients.map((ingredient) => (
+                {ingredients.map((ingredient, idx) => (
                   <SortableRow
                     key={ingredient.id}
                     id={ingredient.id}
                     value={ingredient.value}
                     onChange={(val) => updateIngredient(ingredient.id, val)}
                     onRemove={() => removeIngredient(ingredient.id)}
+                    // Props de ordenación manual
+                    onMoveUp={() => moveItem('ingredients', idx, 'up')}
+                    onMoveDown={() => moveItem('ingredients', idx, 'down')}
+                    isFirst={idx === 0}
+                    isLast={idx === ingredients.length - 1}
+                    // ---------------------------
                     placeholder="e.g. 2 cups of flour"
                     canRemove={ingredients.length > 1}
+                    isMobile={isMobile}
                   />
                 ))}
               </SortableContext>
@@ -750,9 +792,9 @@ export function RecipeForm({
               type="button" 
               variant="ghost" 
               onClick={addIngredient} 
-              className="mt-4 text-muted-foreground hover:text-primary w-full justify-start pl-0 hover:bg-transparent group"
+              className="mt-4 text-muted-foreground hover:text-primary w-full justify-start pl-0 hover:bg-transparent group h-12"
             >
-              <Plus className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" /> 
+              <Plus className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" /> 
               Add another ingredient
             </Button>
           </CardContent>
@@ -761,12 +803,11 @@ export function RecipeForm({
 
       <Separator className="my-8 opacity-50" />
 
-      {/* --- 4. PASOS (Bloque Completo) --- */}
-      <div className="space-y-6 max-w-4xl mx-auto pb-12">
+      {/* --- 4. PASOS (Lineal con Flechas en Móvil) --- */}
+      <div className="space-y-6 max-w-4xl mx-auto pb-12 px-2">
         <div className="flex items-center justify-between">
           <h3 className="font-serif text-2xl font-bold flex items-center gap-2">
-            <ListOrdered className="h-5 w-5 text-primary" />
-            Preparation
+            <ListOrdered className="h-5 w-5 text-primary" /> Preparation
           </h3>
         </div>
         
@@ -778,17 +819,24 @@ export function RecipeForm({
               onDragEnd={handleDragEndSteps}
             >
               <SortableContext items={steps} strategy={verticalListSortingStrategy}>
-                {steps.map((step, index) => (
+                {steps.map((step, idx) => (
                   <SortableRow
                     key={step.id}
                     id={step.id}
                     value={step.value}
                     onChange={(val) => updateStep(step.id, val)}
                     onRemove={() => removeStep(step.id)}
-                    placeholder={`Describe step ${index + 1}...`}
+                    // Props de ordenación manual
+                    onMoveUp={() => moveItem('steps', idx, 'up')}
+                    onMoveDown={() => moveItem('steps', idx, 'down')}
+                    isFirst={idx === 0}
+                    isLast={idx === steps.length - 1}
+                    // ---------------------------
+                    placeholder={`Describe step ${idx + 1}...`}
                     canRemove={steps.length > 1}
                     isTextArea
-                    index={index}
+                    index={idx}
+                    isMobile={isMobile}
                   />
                 ))}
               </SortableContext>
@@ -798,9 +846,9 @@ export function RecipeForm({
               type="button" 
               variant="ghost" 
               onClick={addStep} 
-              className="mt-6 text-muted-foreground hover:text-primary w-full justify-start pl-0 hover:bg-transparent group"
+              className="mt-6 text-muted-foreground hover:text-primary w-full justify-start pl-0 hover:bg-transparent group h-12"
             >
-              <Plus className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" /> 
+              <Plus className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" /> 
               Add another step
             </Button>
           </CardContent>
@@ -809,16 +857,16 @@ export function RecipeForm({
 
       <CommandDialog open={isComponentSearchOpen} onOpenChange={setIsComponentSearchOpen}>
         <Command>
-          <CommandInput placeholder="Search your components..." />
+          <CommandInput placeholder="Search your components..." className="h-12 text-base" />
           <CommandList>
             <CommandEmpty>No components found.</CommandEmpty>
             <CommandGroup heading="Available Components">
               {availableComponents.map((comp) => {
                 const isSelected = linkedComponents.some(c => c.id === comp.id)
                 return (
-                  <CommandItem key={comp.id} onSelect={() => addComponent(comp)} disabled={isSelected}>
+                  <CommandItem key={comp.id} onSelect={() => addComponent(comp)} disabled={isSelected} className="py-3">
                     <Layers className="mr-2 h-4 w-4" />
-                    <span>{comp.name}</span>
+                    <span className="text-base">{comp.name}</span>
                     {isSelected && <Check className="ml-auto h-4 w-4" />}
                   </CommandItem>
                 )
@@ -830,11 +878,12 @@ export function RecipeForm({
 
       {error && <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive text-center font-medium">{error}</div>}
 
-      <div className="sticky bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-border/40 flex justify-center gap-4 z-40">
-        <Button type="button" variant="outline" size="lg" onClick={() => router.back()} disabled={isSubmitting} className="rounded-full px-8 min-w-[120px]">
+      {/* --- BARRA INFERIOR FLOTANTE SEGURA --- */}
+      <div className="sticky bottom-0 left-0 right-0 p-4 pb-6 md:pb-4 bg-background/90 backdrop-blur-xl border-t border-border/40 flex justify-center gap-4 z-40 safe-area-pb">
+        <Button type="button" variant="outline" size="lg" onClick={() => router.back()} disabled={isSubmitting} className="rounded-full px-6 md:px-8 min-w-[100px] md:min-w-[120px] h-12 md:h-10">
           Discard
         </Button>
-        <Button type="submit" size="lg" disabled={isSubmitting} className="rounded-full px-8 min-w-[120px] shadow-lg hover:shadow-xl transition-all">
+        <Button type="submit" size="lg" disabled={isSubmitting} className="rounded-full px-6 md:px-8 min-w-[100px] md:min-w-[120px] h-12 md:h-10 shadow-lg hover:shadow-xl transition-all">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -843,7 +892,7 @@ export function RecipeForm({
           ) : (
             <>
               <CookingPot className="mr-2 h-4 w-4" />
-              Save Recipe
+              Save
             </>
           )}
         </Button>
