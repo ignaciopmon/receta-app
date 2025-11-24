@@ -11,12 +11,13 @@ export function MobileNav() {
   const pathname = usePathname()
 
   // No mostrar en login, home pública, o cuando se está editando/creando
+  // Ocultamos también en la vista de impresión
   if (
     pathname === "/" || 
     pathname.startsWith("/auth") || 
     pathname.includes("/new") || 
     pathname.includes("/edit") ||
-    pathname.endsWith("/print") // Tampoco en vista de impresión
+    pathname.endsWith("/print")
   ) {
     return null
   }
