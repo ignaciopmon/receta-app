@@ -214,8 +214,11 @@ export function RecipeCard({
 
         {/* Footer de acciones - Fijo para evitar saltos */}
         <div className="p-4 pt-0 mt-auto h-12 flex items-end justify-between gap-2">
-          {/* Contenedor con opacidad variable, pero ocupando espacio */}
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0 w-full justify-between">
+          {/* MEJORA MÓVIL: 
+             - Mobile: opacity-100 siempre visible.
+             - Desktop (md): opacity-0 y aparece con hover.
+          */}
+          <div className="flex gap-1 w-full justify-between transition-all duration-300 opacity-100 transform translate-y-0 md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0">
             <div className="flex gap-1">
               <Button asChild variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={(e) => e.stopPropagation()}>
                 <Link href={`/recipes/edit/${id}`}>

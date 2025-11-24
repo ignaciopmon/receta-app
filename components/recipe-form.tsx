@@ -79,7 +79,7 @@ interface FormItem {
 
 const generateId = () => Math.random().toString(36).substr(2, 9)
 
-// --- COMPONENTE FILA ARRASTRABLE (Refinado para ancho completo) ---
+// --- COMPONENTE FILA ARRASTRABLE (Refinado para ancho completo y MÓVIL) ---
 function SortableRow({ 
   id, 
   value, 
@@ -117,11 +117,13 @@ function SortableRow({
 
   return (
     <div ref={setNodeRef} style={style} className={cn("flex gap-4 items-start group relative py-2", isDragging && "opacity-50 bg-muted/30 rounded-md")}>
-      {/* Handle - Visible en hover, con más área de agarre */}
+      {/* Handle - Visible siempre en móvil, solo hover en desktop */}
       <button
         type="button"
         className={cn(
-          "mt-3 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-foreground transition-colors outline-none p-1 opacity-0 group-hover:opacity-100",
+          "mt-3 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-foreground transition-colors outline-none p-1",
+          // MEJORA MÓVIL: opacity-100 por defecto en móvil, opacity-0 en desktop hasta hover
+          "opacity-100 md:opacity-0 md:group-hover:opacity-100",
           isTextArea && "mt-4"
         )}
         {...attributes}
@@ -166,7 +168,9 @@ function SortableRow({
           size="icon" 
           onClick={onRemove}
           className={cn(
-            "text-muted-foreground/30 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-all",
+            "text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-all",
+            // MEJORA MÓVIL: opacity-100 por defecto en móvil, opacity-0 en desktop hasta hover
+            "opacity-100 md:opacity-0 md:group-hover:opacity-100",
             isTextArea && "mt-2"
           )}
           title="Remove item"

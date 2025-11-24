@@ -334,7 +334,8 @@ export default function RecipesPage() {
             </Empty>
 
           ) : filteredRecipes.length > 0 ? (
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            // MEJORA GRID: 'gap-4' en móvil (antes 8), 'sm:gap-8' en escritorio.
+            <div className="grid gap-4 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}
