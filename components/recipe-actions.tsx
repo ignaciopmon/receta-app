@@ -31,28 +31,45 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
   const handleShare = async () => {
     setIsLoading(true)
     
-    if (!isPublic) {
-      const { error } = await supabase
-        .from("recipes")
-        .update({ is_public: true })
-        .eq("id", recipeId)
-      
-      if (error) {
-        setIsLoading(false)
-        toast({ title: "Error", description: "Could not make recipe public.", variant: "destructive" })
-        return
+    try {
+      // 1. Si no es pública, hacerla pública primero
+      if (!isPublic) {
+        const { error } = await supabase
+          .from("recipes")
+          .update({ is_public: true })
+          .eq("id", recipeId)
+        
+        if (error) throw error
+        setIsPublic(true)
       }
+
+      // 2. Intentar usar Share API Nativa (Móvil)
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out this recipe on Cocina',
+          text: 'I found this great recipe!',
+          url: publicUrl,
+        })
+        toast({ title: "Shared successfully!" })
+      } else {
+        // 3. Fallback a copiar al portapapeles (Desktop)
+        await navigator.clipboard.writeText(publicUrl)
+        toast({
+          title: "Link Copied!",
+          description: "Recipe link copied to clipboard.",
+        })
+      }
+      
+      router.refresh()
+    } catch (error) {
+      // Ignorar error si el usuario cancela el share nativo
+      if ((error as Error).name !== 'AbortError') {
+        console.error(error)
+        toast({ title: "Error sharing", variant: "destructive" })
+      }
+    } finally {
+      setIsLoading(false)
     }
-    
-    navigator.clipboard.writeText(publicUrl)
-    
-    setIsPublic(true)
-    setIsLoading(false)
-    toast({
-      title: "Recipe Published & Link Copied!",
-      description: "Your recipe is now public and the link is in your clipboard.",
-    })
-    router.refresh()
   }
   
   const handleUnpublish = async () => {
@@ -81,23 +98,15 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
   return (
     <div className="flex gap-3 flex-shrink-0 flex-wrap justify-center">
       
-      {/* Botón para añadir a Cookbook */}
       <AddRecipeToCookbook recipeId={recipeId} />
 
-      {/* --- BOTÓN DE IMPRESIÓN (NUEVO) --- */}
+      {/* Botón de Impresión (Oculto en móvil a veces, pero útil si tienes impresora wifi) */}
       <Button asChild variant="outline" className="hidden md:inline-flex" title="Print Recipe">
         <Link href={`/recipes/${recipeId}/print`}>
           <Printer className="mr-2 h-4 w-4" />
           Print
         </Link>
       </Button>
-      {/* Versión móvil (icono solo) */}
-      <Button asChild variant="outline" size="icon" className="md:hidden" title="Print Recipe">
-        <Link href={`/recipes/${recipeId}/print`}>
-          <Printer className="h-4 w-4" />
-        </Link>
-      </Button>
-      {/* --------------------------------- */}
       
       {!isComponent && (
         <>
@@ -107,28 +116,19 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
                 Unpublish
               </Button>
-              <Button onClick={handleUnpublish} disabled={isLoading} variant="outline" size="icon" className="md:hidden">
-                <XCircle className="h-4 w-4" />
-              </Button>
-
-              <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-                Copy Link
-              </Button>
-              <Button onClick={handleShare} disabled={isLoading} size="icon" className="md:hidden">
-                <Share2 className="h-4 w-4" />
+              
+              {/* Botón Share unificado */}
+              <Button onClick={handleShare} disabled={isLoading} variant="outline">
+                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                 <span className="ml-2 md:hidden">Share</span>
+                 <span className="hidden md:inline ml-2">Share Link</span>
               </Button>
             </>
           ) : (
-            <>
-              <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex">
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
-                Publish & Share
-              </Button>
-              <Button onClick={handleShare} disabled={isLoading} size="icon" className="md:hidden">
-                <Globe className="h-4 w-4" />
-              </Button>
-            </>
+            <Button onClick={handleShare} disabled={isLoading} className="bg-primary text-primary-foreground hover:bg-primary/90">
+               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+               <span className="ml-2">Publish & Share</span>
+            </Button>
           )}
         </>
       )}
@@ -146,19 +146,11 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
       </Button>
       
       {link && (
-        <>
-          <Button asChild variant="outline" size="icon" className="md:hidden">
-            <a href={link} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </Button>
-          <Button asChild variant="outline" className="hidden md:inline-flex">
-            <a href={link} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              View Source
-            </a>
-          </Button>
-        </>
+        <Button asChild variant="ghost" size="icon" className="text-muted-foreground">
+          <a href={link} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </Button>
       )}
     </div>
   )

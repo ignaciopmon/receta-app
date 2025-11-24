@@ -1,8 +1,11 @@
+// app/layout.tsx
+
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/lib/theme-provider"
+import { MobileNav } from "@/components/mobile-nav" // <-- IMPORTAR
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -14,14 +17,11 @@ export const metadata: Metadata = {
   description: "Save and organize your favorite recipes",
 }
 
-// In app/layout.js
-
-// Your NEW, separate generateViewport function
-export function generateViewport({ params }) {
-  return {
-    width: 'device-width',
-    initialScale: 1,
-  };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1, // Evita zoom indeseado en inputs en iOS
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -30,9 +30,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${_playfair.variable} font-sans antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <MobileNav /> {/* <-- AÑADIR AQUÍ */}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>
