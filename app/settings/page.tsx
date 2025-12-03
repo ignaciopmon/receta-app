@@ -7,6 +7,7 @@ import { SettingsForm } from "@/components/settings-form"
 import { TrashSection } from "@/components/trash-section"
 import { AccountForm } from "@/components/account-form"
 import { Separator } from "@/components/ui/separator"
+import { StatsDashboard } from "@/components/stats-dashboard"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -24,6 +25,12 @@ export default async function SettingsPage() {
     .eq("id", data.user.id)
     .single()
 
+  const { data: recipes } = await supabase
+    .from("recipes")
+    .select("*")
+    .eq("user_id", data.user.id)
+    .is("deleted_at", null)
+
   const { data: deletedRecipes } = await supabase
     .from("recipes")
     .select("*")
@@ -40,16 +47,27 @@ export default async function SettingsPage() {
         <div className="w-full bg-muted/30 border-b border-border/40 py-12 mb-12">
           <div className="container mx-auto px-4 text-center max-w-2xl">
             <h1 className="text-4xl font-serif font-bold mb-3 text-foreground tracking-tight">
-              Settings
+              My Profile
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Manage your account preferences, customize your experience, and recover deleted items.
+              Your personal dashboard and preferences center.
             </p>
           </div>
         </div>
 
         <div className="container mx-auto px-4 max-w-3xl space-y-10">
           
+          {/* Sección Dashboard */}
+          {recipes && recipes.length > 0 && (
+            <>
+              <section className="space-y-4">
+                <h2 className="text-lg font-serif font-semibold px-1">Overview</h2>
+                <StatsDashboard recipes={recipes} />
+              </section>
+              <Separator className="opacity-50" />
+            </>
+          )}
+
           {/* Sección Cuenta */}
           <section className="space-y-4">
             <h2 className="text-lg font-serif font-semibold px-1">Account & Session</h2>
