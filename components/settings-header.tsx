@@ -16,7 +16,9 @@ export function SettingsHeader() {
           </div>
           <span className="text-xl font-serif font-bold tracking-tight">Cocina</span>
         </Link>
-        <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground rounded-full">
+        
+        {/* Botón oculto en móvil (hidden) y visible en escritorio (md:inline-flex) */}
+        <Button variant="ghost" asChild size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground rounded-full">
           <Link href="/recipes">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Main Menu
