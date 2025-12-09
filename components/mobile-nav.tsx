@@ -10,8 +10,7 @@ import { cn } from "@/lib/utils"
 export function MobileNav() {
   const pathname = usePathname()
 
-  // No mostrar en login, home pública, o cuando se está editando/creando
-  // Ocultamos también en la vista de impresión
+  // Don't show on login, public home, new/edit pages or print view
   if (
     pathname === "/" || 
     pathname.startsWith("/auth") || 
@@ -26,32 +25,32 @@ export function MobileNav() {
     {
       href: "/recipes",
       icon: UtensilsCrossed,
-      label: "Recetas",
+      label: "Recipes",
       active: pathname === "/recipes" || pathname.startsWith("/recipes/"),
     },
     {
       href: "/search",
       icon: Search,
-      label: "Buscar",
+      label: "Search",
       active: pathname === "/search",
     },
     {
       href: "/recipes/new",
       icon: Plus,
-      label: "Crear",
+      label: "Add",
       active: false,
-      isAction: true // Botón central destacado
+      isAction: true // Highlighted center button
     },
     {
       href: "/cookbooks",
       icon: BookOpen,
-      label: "Libros",
+      label: "Cookbooks",
       active: pathname.startsWith("/cookbooks"),
     },
     {
       href: "/settings",
       icon: User,
-      label: "Perfil",
+      label: "Me",
       active: pathname === "/settings",
     },
   ]
@@ -69,14 +68,14 @@ export function MobileNav() {
             )}
           >
             {item.isAction ? (
-              // Botón Central "Crear" Estilo TikTok/Instagram
+              // Central "Add" Button (Floating style)
               <div className="relative -top-3 shadow-lg shadow-primary/25">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground border-4 border-background transition-transform hover:scale-105 active:scale-95">
                   <item.icon className="h-6 w-6" strokeWidth={3} />
                 </div>
               </div>
             ) : (
-              // Items Normales
+              // Standard Items
               <>
                 <div className={cn(
                   "p-1.5 rounded-xl transition-colors duration-300",
