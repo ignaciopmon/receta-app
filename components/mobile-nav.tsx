@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { UtensilsCrossed, Search, BookOpen, User, PlusCircle } from "lucide-react"
+import { UtensilsCrossed, Search, BookOpen, User, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function MobileNav() {
@@ -26,60 +26,76 @@ export function MobileNav() {
     {
       href: "/recipes",
       icon: UtensilsCrossed,
-      label: "Recipes",
+      label: "Recetas",
       active: pathname === "/recipes" || pathname.startsWith("/recipes/"),
     },
     {
       href: "/search",
       icon: Search,
-      label: "Search",
+      label: "Buscar",
       active: pathname === "/search",
     },
     {
       href: "/recipes/new",
-      icon: PlusCircle,
-      label: "Add",
-      active: false, // Botón de acción, no estado
-      isAction: true
+      icon: Plus,
+      label: "Crear",
+      active: false,
+      isAction: true // Botón central destacado
     },
     {
       href: "/cookbooks",
       icon: BookOpen,
-      label: "Cookbooks",
+      label: "Libros",
       active: pathname.startsWith("/cookbooks"),
     },
     {
       href: "/settings",
       icon: User,
-      label: "Me",
+      label: "Perfil",
       active: pathname === "/settings",
     },
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/85 backdrop-blur-lg border-t border-border/40 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-16 px-1">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[50] pb-[env(safe-area-inset-bottom)] bg-background/80 backdrop-blur-xl border-t border-border/50 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
+      <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => (
           <Link
             key={item.label}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors active:scale-95",
-              item.isAction 
-                ? "text-primary" 
-                : item.active 
-                  ? "text-foreground font-medium" 
-                  : "text-muted-foreground hover:text-foreground"
+              "relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-300 active:scale-90",
+              item.isAction ? "" : "hover:text-foreground"
             )}
           >
             {item.isAction ? (
-              <div className="bg-primary/10 p-2 rounded-full mb-1">
-                <item.icon className="h-6 w-6 text-primary" />
+              // Botón Central "Crear" Estilo TikTok/Instagram
+              <div className="relative -top-3 shadow-lg shadow-primary/25">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground border-4 border-background transition-transform hover:scale-105 active:scale-95">
+                  <item.icon className="h-6 w-6" strokeWidth={3} />
+                </div>
               </div>
             ) : (
+              // Items Normales
               <>
-                <item.icon className={cn("h-5 w-5 transition-all", item.active && "fill-current/10")} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <div className={cn(
+                  "p-1.5 rounded-xl transition-colors duration-300",
+                  item.active ? "text-foreground bg-primary/10" : "text-muted-foreground"
+                )}>
+                  <item.icon 
+                    className={cn(
+                      "h-5 w-5 transition-all duration-300", 
+                      item.active && "fill-current scale-105"
+                    )} 
+                    strokeWidth={item.active ? 2.5 : 2}
+                  />
+                </div>
+                <span className={cn(
+                  "text-[10px] font-medium transition-colors duration-300",
+                  item.active ? "text-foreground" : "text-muted-foreground"
+                )}>
+                  {item.label}
+                </span>
               </>
             )}
           </Link>
