@@ -44,7 +44,6 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
   const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Safe window access for SSR
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const publicUrl = `${origin}/profile/recipe/${recipeId}`
 
@@ -52,7 +51,6 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
     setIsLoading(true)
     
     try {
-      // 1. Make public if private
       if (!isPublic) {
         const { error } = await supabase
           .from("recipes")
@@ -63,20 +61,16 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
         setIsPublic(true)
       }
 
-      // 2. Mobile Native Share
       if (navigator.share) {
         await navigator.share({
-          title: 'Check out this recipe on Cocina',
-          text: 'I found this great recipe!',
+          title: 'Check out this recipe',
           url: publicUrl,
         })
-        toast({ title: "Shared successfully!" })
       } else {
-        // 3. Desktop Clipboard Fallback
         await navigator.clipboard.writeText(publicUrl)
         toast({
-          title: "Link Copied!",
-          description: "Recipe link copied to clipboard.",
+          title: "Link Copied",
+          description: "Recipe link ready to share.",
         })
       }
       
@@ -101,15 +95,15 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
       
     if (error) {
       setIsLoading(false)
-      toast({ title: "Error", description: "Could not unpublish recipe.", variant: "destructive" })
+      toast({ title: "Error", description: "Could not update recipe.", variant: "destructive" })
       return
     }
     
     setIsPublic(false)
     setIsLoading(false)
     toast({
-      title: "Recipe is now Private",
-      description: "Your recipe is no longer publicly visible.",
+      title: "Recipe Private",
+      description: "Recipe is no longer public.",
     })
     router.refresh()
   }
@@ -119,8 +113,8 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
       
       <AddRecipeToCookbook recipeId={recipeId} />
 
-      {/* --- DESKTOP VIEW (Preserved exactly as requested) --- */}
-      <Button asChild variant="outline" className="hidden md:inline-flex" title="Print Recipe">
+      {/* --- DESKTOP VIEW (Intacto) --- */}
+      <Button asChild variant="outline" className="hidden md:inline-flex" title="Print">
         <Link href={`/recipes/${recipeId}/print`}>
           <Printer className="mr-2 h-4 w-4" />
           Print
@@ -135,15 +129,13 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
                 Unpublish
               </Button>
-              
-              {/* Desktop Share Button */}
               <Button onClick={handleShare} disabled={isLoading} variant="outline" className="hidden md:inline-flex">
                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
                  <span className="ml-2">Share Link</span>
               </Button>
             </>
           ) : (
-            <Button onClick={handleShare} disabled={isLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 hidden md:inline-flex">
+            <Button onClick={handleShare} disabled={isLoading} className="hidden md:inline-flex bg-primary text-primary-foreground hover:bg-primary/90">
                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
                <span className="ml-2">Publish & Share</span>
             </Button>
@@ -166,44 +158,45 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
         </Button>
       )}
 
-      {/* --- MOBILE VIEW (New Clean "App-like" Design) --- */}
+      {/* --- MOBILE VIEW (Minimalist & Elegant) --- */}
       
-      {/* 1. Primary Action: Share/Publish (Visible on mobile) */}
+      {/* 1. Share/Publish (Ahora estilo Outline para no destacar "por la cara") */}
       {!isComponent && (
         <Button 
           onClick={handleShare} 
           disabled={isLoading} 
-          className="md:hidden bg-primary text-primary-foreground shadow-sm"
+          variant="outline" // Cambio clave: ahora es outline
+          className="md:hidden border-primary/20 hover:bg-primary/5" // Borde muy sutil
           size="sm"
         >
            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPublic ? <Share2 className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-           <span className="ml-2">{isPublic ? "Share" : "Publish"}</span>
+           <span className="ml-2 font-serif">{isPublic ? "Share" : "Publish"}</span>
         </Button>
       )}
 
-      {/* 2. Secondary Actions: Dropdown Menu (Visible on mobile only) */}
+      {/* 2. Menu (Tres puntos sutiles) */}
       <div className="md:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Recipe Options</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-48 font-serif">
+            <DropdownMenuLabel className="font-sans text-xs text-muted-foreground uppercase tracking-wider">Options</DropdownMenuLabel>
             <DropdownMenuSeparator />
             
             <DropdownMenuItem asChild>
               <Link href={`/recipes/edit/${recipeId}`} className="cursor-pointer">
                 <PenSquare className="mr-2 h-4 w-4" />
-                Edit Recipe
+                Edit
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <Link href={`/recipes/${recipeId}/print`} className="cursor-pointer">
                 <Printer className="mr-2 h-4 w-4" />
-                Print View
+                Print
               </Link>
             </DropdownMenuItem>
 
@@ -211,7 +204,7 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
               <DropdownMenuItem asChild>
                 <a href={link} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  Original Source
+                  Source
                 </a>
               </DropdownMenuItem>
             )}
@@ -219,7 +212,7 @@ export function RecipeActions({ recipeId, initialIsPublic, link, isComponent }: 
             {isPublic && !isComponent && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleUnpublish} className="text-destructive focus:text-destructive cursor-pointer">
+                <DropdownMenuItem onClick={handleUnpublish} className="text-muted-foreground focus:text-destructive cursor-pointer">
                   <EyeOff className="mr-2 h-4 w-4" />
                   Make Private
                 </DropdownMenuItem>
