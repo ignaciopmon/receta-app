@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { ExternalLink, ArrowLeft, User, Clock, Users, Star, Layers, Utensils, Flame, ChefHat, Printer } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { CloneRecipeButton } from "@/components/clone-recipe-button"
+import { SaveRecipeButton } from "@/components/save-recipe-button"
 
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
@@ -47,127 +47,77 @@ function MetaItem({ icon: Icon, label, value }: { icon: any, label: string, valu
 function IngredientItem({ text, index }: { text: string, index: number }) {
   return (
     <div className="flex items-start gap-3 py-3 border-b border-border/40 last:border-0 group hover:bg-muted/30 transition-colors px-2 rounded-md -mx-2">
-      <Checkbox 
-        id={`ing-${index}`} 
-        className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary" 
-      />
-      <label 
-        htmlFor={`ing-${index}`}
-        className="text-base leading-relaxed text-foreground/90 peer-disabled:opacity-70 cursor-pointer select-none group-hover:text-foreground transition-colors"
-      >
-        {text}
-      </label>
+      <Checkbox id={`ing-${index}`} className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+      <label htmlFor={`ing-${index}`} className="text-base leading-relaxed text-foreground/90 peer-disabled:opacity-70 cursor-pointer select-none group-hover:text-foreground transition-colors">{text}</label>
     </div>
   )
 }
 
-export default async function PublicRecipePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function PublicRecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
 
-  // 1. Obtener el usuario actual (si lo hay) para saber si mostrar o activar el botón de clonar
   const { data: authData } = await supabase.auth.getUser()
   const currentUserId = authData?.user?.id
 
-  // 2. Obtener receta
-  const { data: recipe, error: recipeError } = await supabase
-    .from("recipes")
-    .select("*")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .single()
+  // Obtener receta
+  const { data: recipe, error: recipeError } = await supabase.from("recipes").select("*").eq("id", id).is("deleted_at", null).single()
+  if (recipeError || !recipe) notFound()
 
-  if (recipeError || !recipe) {
-    notFound()
+  // Comprobar si ya está guardada
+  let initialIsSaved = false
+  if (currentUserId) {
+    const { data: savedData } = await supabase.from("saved_recipes").select("recipe_id").eq("user_id", currentUserId).eq("recipe_id", id).single()
+    if (savedData) initialIsSaved = true
   }
 
-  // 3. Obtener perfil del autor
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", recipe.user_id)
-    .single()
-
+  const { data: profile } = await supabase.from("profiles").select("username").eq("id", recipe.user_id).single()
   const username = profile?.username || "Unknown"
 
-  // 4. Obtener sub-recetas
-  const { data: components } = await supabase
-    .from("recipe_components")
-    .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url)")
-    .eq("parent_recipe_id", id)
-  
+  const { data: components } = await supabase.from("recipe_components").select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url)").eq("parent_recipe_id", id)
   const subRecipes = components?.map((c: any) => c.recipes).filter((r: any) => r !== null) || []
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
+
+  // Si eres el autor, no muestras el botón de guardar
+  const isAuthor = currentUserId === recipe.user_id
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <PublicHeader />
-      
       <main className="flex-1 w-full">
-        
-        {/* --- CABECERA CENTRADA --- */}
         <div className="w-full max-w-4xl mx-auto pt-8 pb-6 px-4 md:pt-12 md:px-6 text-center">
           
           <div className="flex justify-center mb-6">
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-full">
-              <Link href={`/profile/${encodeURIComponent(username)}`}>
-                <ArrowLeft className="mr-1.5 h-4 w-4" />
-                Back to @{username}
-              </Link>
+              <Link href={`/profile/${encodeURIComponent(username)}`}><ArrowLeft className="mr-1.5 h-4 w-4" />Back to @{username}</Link>
             </Button>
           </div>
 
           <div className="flex items-center justify-center gap-3 mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {recipe.category && (
-              <Badge variant="secondary" className="rounded-full px-3 font-medium text-muted-foreground bg-secondary">
-                {recipe.category}
-              </Badge>
-            )}
-            {recipe.difficulty && (
-              <Badge variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">
-                {recipe.difficulty}
-              </Badge>
-            )}
+            {recipe.category && <Badge variant="secondary" className="rounded-full px-3 font-medium text-muted-foreground bg-secondary">{recipe.category}</Badge>}
+            {recipe.difficulty && <Badge variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">{recipe.difficulty}</Badge>}
             {!recipe.is_component && <StarRating rating={recipe.rating} />}
-            
-            {recipe.tags && recipe.tags.length > 0 && recipe.tags.map((tag: string) => (
-              <Badge key={tag} variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">
-                #{tag}
-              </Badge>
-            ))}
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 leading-tight tracking-tight text-balance animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
-            {recipe.name}
-          </h1>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 leading-tight tracking-tight text-balance animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">{recipe.name}</h1>
 
-          {/* Autor y Acciones (Link + Print + Clone) */}
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 px-3 py-1 rounded-full border border-border/30">
               <User className="h-4 w-4" />
               <span>Recipe by <strong className="text-foreground">@{username}</strong></span>
             </div>
             
-            {/* NUEVO BOTÓN DE CLONAR */}
-            <CloneRecipeButton recipe={recipe} currentUserId={currentUserId} />
+            {/* EL NUEVO BOTÓN DE GUARDAR */}
+            {!isAuthor && (
+              <SaveRecipeButton recipeId={recipe.id} initialIsSaved={initialIsSaved} currentUserId={currentUserId} />
+            )}
             
             <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary hidden sm:flex">
-              <Link href={`/profile/recipe/${id}/print`}>
-                <span className="text-xs font-medium">Print</span>
-                <Printer className="h-3 w-3" />
-              </Link>
+              <Link href={`/profile/recipe/${id}/print`}><span className="text-xs font-medium">Print</span><Printer className="h-3 w-3" /></Link>
             </Button>
-
             {recipe.link && (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary hidden sm:flex">
-                <a href={recipe.link} target="_blank" rel="noopener noreferrer">
-                  <span className="text-xs font-medium">Source</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                <a href={recipe.link} target="_blank" rel="noopener noreferrer"><span className="text-xs font-medium">Source</span><ExternalLink className="h-3 w-3" /></a>
               </Button>
             )}
           </div>
@@ -183,17 +133,10 @@ export default async function PublicRecipePage({
         <div className="w-full max-w-5xl mx-auto px-4 mb-12">
           <div className="relative aspect-video md:aspect-[21/9] w-full overflow-hidden rounded-xl shadow-lg border border-border/30 bg-muted group">
             {recipe.image_url ? (
-              <Image 
-                src={recipe.image_url} 
-                alt={recipe.name} 
-                fill 
-                className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                priority
-              />
+              <Image src={recipe.image_url} alt={recipe.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-105" priority />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center bg-secondary/30 text-muted-foreground/20">
-                <ChefHat className="h-24 w-24 mb-4 opacity-20" />
-                <span className="font-serif text-2xl italic opacity-40">Bon Appétit</span>
+                <ChefHat className="h-24 w-24 mb-4 opacity-20" /><span className="font-serif text-2xl italic opacity-40">Bon Appétit</span>
               </div>
             )}
           </div>
@@ -201,25 +144,16 @@ export default async function PublicRecipePage({
 
         <div className="container max-w-5xl mx-auto px-4 pb-20">
           <div className="grid gap-12 lg:grid-cols-[320px_1fr] items-start">
-            
             <aside className="space-y-8">
               {subRecipes.length > 0 && (
                 <Card className="border-primary/20 bg-primary/5 shadow-none overflow-hidden">
-                  <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2 text-primary font-serif font-bold">
-                    <Layers className="h-4 w-4" />
-                    Required Components
-                  </div>
+                  <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2 text-primary font-serif font-bold"><Layers className="h-4 w-4" />Required Components</div>
                   <CardContent className="p-0">
                     <div className="divide-y divide-primary/10">
                       {subRecipes.map((sub: any) => (
                         <Link key={sub.id} href={`/profile/recipe/${sub.id}`} className="flex items-center gap-3 p-3 hover:bg-primary/10 transition-colors">
                           <div className="relative h-10 w-10 rounded bg-background shrink-0 overflow-hidden border border-primary/10">
-                            <Image 
-                              src={sub.image_url || "/placeholder.svg"} 
-                              alt={sub.name} 
-                              fill 
-                              className="object-cover"
-                            />
+                            <Image src={sub.image_url || "/placeholder.svg"} alt={sub.name} fill className="object-cover" />
                           </div>
                           <span className="text-sm font-medium line-clamp-1 text-foreground/80">{sub.name}</span>
                         </Link>
@@ -228,13 +162,9 @@ export default async function PublicRecipePage({
                   </CardContent>
                 </Card>
               )}
-
               <div>
                 <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border flex items-center justify-between">
-                  <span>Ingredients</span>
-                  <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-1 rounded-md">
-                    {recipe.ingredients.length} items
-                  </span>
+                  <span>Ingredients</span><span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-1 rounded-md">{recipe.ingredients.length} items</span>
                 </h3>
                 <div className="flex flex-col gap-1">
                   {recipe.ingredients.map((ingredient: string, index: number) => (
@@ -243,38 +173,22 @@ export default async function PublicRecipePage({
                 </div>
               </div>
             </aside>
-
             <div className="space-y-8">
-              <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border">
-                Preparation
-              </h3>
-              
+              <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border">Preparation</h3>
               <div className="space-y-10">
                 {recipe.steps.map((step: string, index: number) => (
                   <div key={index} className="group relative pl-4">
-                    <div className="absolute -left-4 -top-2 text-6xl font-serif font-bold text-muted-foreground/10 select-none group-hover:text-primary/10 transition-colors">
-                      {index + 1}
-                    </div>
-                    
+                    <div className="absolute -left-4 -top-2 text-6xl font-serif font-bold text-muted-foreground/10 select-none group-hover:text-primary/10 transition-colors">{index + 1}</div>
                     <div className="relative">
                       <h4 className="font-bold text-foreground mb-2 text-sm uppercase tracking-widest text-muted-foreground">Step {index + 1}</h4>
-                      <p className="text-lg leading-relaxed text-foreground/90 font-serif">
-                        {step}
-                      </p>
+                      <p className="text-lg leading-relaxed text-foreground/90 font-serif">{step}</p>
                     </div>
                   </div>
                 ))}
               </div>
-
               <Separator className="my-12" />
-              
-              <div className="flex justify-center">
-                <p className="text-center text-muted-foreground italic font-serif">
-                  Enjoy your meal!
-                </p>
-              </div>
+              <div className="flex justify-center"><p className="text-center text-muted-foreground italic font-serif">Enjoy your meal!</p></div>
             </div>
-
           </div>
         </div>
       </main>

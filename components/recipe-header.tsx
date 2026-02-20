@@ -8,7 +8,8 @@ import {
   NotebookPen, 
   SlidersHorizontal, 
   Search, 
-  BookOpen 
+  BookOpen,
+  Bookmark
 } from "lucide-react"
 import Link from "next/link"
 
@@ -29,6 +30,13 @@ export function RecipeHeader() {
             <Link href="/search">
               <Search className="mr-2 h-4 w-4" />
               <span>Search</span>
+            </Link>
+          </Button>
+
+          <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
+            <Link href="/saved">
+              <Bookmark className="mr-2 h-4 w-4" />
+              Saved
             </Link>
           </Button>
           
@@ -53,17 +61,14 @@ export function RecipeHeader() {
           </Button>
         </div>
 
-        {/* Móvil: Solo botón "Add" rápido (opcional, ya que está abajo, pero es útil tenerlo arriba también si se hace scroll) 
-            o dejarlo limpio. Vamos a dejarlo limpio para que no compita con la barra inferior.
-            Si quieres un botón, descomenta esto:
-        */}
-        {/* <div className="md:hidden">
-           <Button asChild size="sm" variant="ghost">
-            <Link href="/recipes/new">
-              <NotebookPen className="h-5 w-5 text-primary" />
+        {/* Móvil: Añadimos un acceso rápido a guardados arriba a la derecha */}
+        <div className="md:hidden flex items-center">
+          <Button variant="ghost" asChild size="icon" className="text-muted-foreground hover:text-foreground">
+            <Link href="/saved">
+              <Bookmark className="h-5 w-5" />
             </Link>
           </Button>
-        </div> */}
+        </div>
       </div>
     </header>
   )
