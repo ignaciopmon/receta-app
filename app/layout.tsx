@@ -5,7 +5,7 @@ import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/lib/theme-provider"
-import { MobileNav } from "@/components/mobile-nav" // <-- IMPORTAR
+import { MobileNav } from "@/components/mobile-nav" 
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -15,6 +15,15 @@ const _playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playf
 export const metadata: Metadata = {
   title: "Cocina",
   description: "Save and organize your favorite recipes",
+  // NUEVO: Configuración especial para que iOS la trate como App Nativa
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Cocina",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export const viewport: Viewport = {
@@ -22,6 +31,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1, // Evita zoom indeseado en inputs en iOS
   userScalable: false,
+  // NUEVO: Pinta la barra de estado del móvil del color de tu tema
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fdfbf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
+  ],
 }
 
 export default function RootLayout({
@@ -34,7 +48,7 @@ export default function RootLayout({
       <body className={`${_playfair.variable} font-sans antialiased`}>
         <ThemeProvider>
           {children}
-          <MobileNav /> {/* <-- AÑADIR AQUÍ */}
+          <MobileNav /> 
         </ThemeProvider>
         <Analytics />
       </body>
