@@ -13,6 +13,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Toaster } from "@/components/ui/toaster"
 import { RecipeActions } from "@/components/recipe-actions"
+import { WakeLock } from "@/components/wake-lock" // <--- IMPORTAMOS LA MAGIA
 
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
@@ -73,6 +74,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <RecipeHeader />
+      <WakeLock /> {/* <--- ACTIVAMOS EL COMPONENTE INVISIBLE AQUÍ */}
       
       <main className="flex-1 w-full">
         <div className="w-full max-w-4xl mx-auto pt-8 pb-6 px-4 md:pt-12 md:px-6 text-center">
@@ -87,7 +89,6 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
             {recipe.difficulty && <Badge variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">{recipe.difficulty}</Badge>}
             {!recipe.is_component && <StarRating rating={recipe.rating} />}
             
-            {/* RENDERIZADO DE ETIQUETAS AQUÍ */}
             {recipe.tags && recipe.tags.length > 0 && recipe.tags.map((tag: string) => (
               <Badge key={tag} variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">
                 #{tag}

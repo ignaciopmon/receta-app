@@ -12,6 +12,7 @@ import { ExternalLink, ArrowLeft, User, Clock, Users, Star, Layers, Utensils, Fl
 import Link from "next/link"
 import Image from "next/image"
 import { SaveRecipeButton } from "@/components/save-recipe-button"
+import { WakeLock } from "@/components/wake-lock" // <--- IMPORTAMOS LA MAGIA
 
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
@@ -84,6 +85,8 @@ export default async function PublicRecipePage({ params }: { params: Promise<{ i
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <PublicHeader />
+      <WakeLock /> {/* <--- ACTIVAMOS EL COMPONENTE INVISIBLE AQUÍ */}
+      
       <main className="flex-1 w-full">
         <div className="w-full max-w-4xl mx-auto pt-8 pb-6 px-4 md:pt-12 md:px-6 text-center">
           
@@ -97,6 +100,11 @@ export default async function PublicRecipePage({ params }: { params: Promise<{ i
             {recipe.category && <Badge variant="secondary" className="rounded-full px-3 font-medium text-muted-foreground bg-secondary">{recipe.category}</Badge>}
             {recipe.difficulty && <Badge variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">{recipe.difficulty}</Badge>}
             {!recipe.is_component && <StarRating rating={recipe.rating} />}
+            {recipe.tags && recipe.tags.length > 0 && recipe.tags.map((tag: string) => (
+              <Badge key={tag} variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">
+                #{tag}
+              </Badge>
+            ))}
           </div>
 
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 leading-tight tracking-tight text-balance animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">{recipe.name}</h1>
@@ -107,7 +115,6 @@ export default async function PublicRecipePage({ params }: { params: Promise<{ i
               <span>Recipe by <strong className="text-foreground">@{username}</strong></span>
             </div>
             
-            {/* EL NUEVO BOTÓN DE GUARDAR */}
             {!isAuthor && (
               <SaveRecipeButton recipeId={recipe.id} initialIsSaved={initialIsSaved} currentUserId={currentUserId} />
             )}
