@@ -62,6 +62,7 @@ export default async function EditRecipePage({
             initialCookTime={recipe.cook_time}
             initialServings={recipe.servings}
             initialIsComponent={recipe.is_component} 
+            initialTags={recipe.tags} // PASAMOS LAS ETIQUETAS A LA UI
           />
         </div>
       </main>
