@@ -8,13 +8,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-// Añadimos 'Printer' a las importaciones
 import { ExternalLink, ArrowLeft, User, Clock, Users, Star, Layers, Utensils, Flame, ChefHat, Printer } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
-
-// --- Componentes Auxiliares ---
+import { CloneRecipeButton } from "@/components/clone-recipe-button"
 
 function StarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === 0) {
@@ -72,7 +69,11 @@ export default async function PublicRecipePage({
   const { id } = await params
   const supabase = await createClient()
 
-  // 1. Obtener receta
+  // 1. Obtener el usuario actual (si lo hay) para saber si mostrar o activar el botón de clonar
+  const { data: authData } = await supabase.auth.getUser()
+  const currentUserId = authData?.user?.id
+
+  // 2. Obtener receta
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
     .select("*")
@@ -84,7 +85,7 @@ export default async function PublicRecipePage({
     notFound()
   }
 
-  // 2. Obtener perfil del autor
+  // 3. Obtener perfil del autor
   const { data: profile } = await supabase
     .from("profiles")
     .select("username")
@@ -93,7 +94,7 @@ export default async function PublicRecipePage({
 
   const username = profile?.username || "Unknown"
 
-  // 3. Obtener sub-recetas
+  // 4. Obtener sub-recetas
   const { data: components } = await supabase
     .from("recipe_components")
     .select("recipes!recipe_components_component_recipe_id_fkey(id, name, image_url)")
@@ -111,7 +112,6 @@ export default async function PublicRecipePage({
         {/* --- CABECERA CENTRADA --- */}
         <div className="w-full max-w-4xl mx-auto pt-8 pb-6 px-4 md:pt-12 md:px-6 text-center">
           
-          {/* Navegación */}
           <div className="flex justify-center mb-6">
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-full">
               <Link href={`/profile/${encodeURIComponent(username)}`}>
@@ -121,7 +121,6 @@ export default async function PublicRecipePage({
             </Button>
           </div>
 
-          {/* Badges y Rating */}
           <div className="flex items-center justify-center gap-3 mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {recipe.category && (
               <Badge variant="secondary" className="rounded-full px-3 font-medium text-muted-foreground bg-secondary">
@@ -134,31 +133,37 @@ export default async function PublicRecipePage({
               </Badge>
             )}
             {!recipe.is_component && <StarRating rating={recipe.rating} />}
+            
+            {recipe.tags && recipe.tags.length > 0 && recipe.tags.map((tag: string) => (
+              <Badge key={tag} variant="outline" className="rounded-full px-3 font-medium border-muted-foreground/30 text-muted-foreground">
+                #{tag}
+              </Badge>
+            ))}
           </div>
 
-          {/* Título */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-4 leading-tight tracking-tight text-balance animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
             {recipe.name}
           </h1>
 
-          {/* Autor y Acciones (Link + Print) */}
+          {/* Autor y Acciones (Link + Print + Clone) */}
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 px-3 py-1 rounded-full border border-border/30">
               <User className="h-4 w-4" />
               <span>Recipe by <strong className="text-foreground">@{username}</strong></span>
             </div>
             
-            {/* Botón de Imprimir Público */}
-            <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
+            {/* NUEVO BOTÓN DE CLONAR */}
+            <CloneRecipeButton recipe={recipe} currentUserId={currentUserId} />
+            
+            <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary hidden sm:flex">
               <Link href={`/profile/recipe/${id}/print`}>
                 <span className="text-xs font-medium">Print</span>
                 <Printer className="h-3 w-3" />
               </Link>
             </Button>
 
-            {/* Enlace Externo si existe */}
             {recipe.link && (
-              <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
+              <Button asChild variant="outline" size="sm" className="h-8 rounded-full gap-1.5 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary hidden sm:flex">
                 <a href={recipe.link} target="_blank" rel="noopener noreferrer">
                   <span className="text-xs font-medium">Source</span>
                   <ExternalLink className="h-3 w-3" />
@@ -167,7 +172,6 @@ export default async function PublicRecipePage({
             )}
           </div>
 
-          {/* Barra de Datos (Metadata Strip) */}
           <div className="flex flex-wrap items-center justify-center gap-y-4 border-y border-border/60 py-4 mb-8 bg-card/50 backdrop-blur-sm rounded-xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 w-fit mx-auto shadow-sm">
             <MetaItem icon={Clock} label="Total Time" value={totalTime > 0 ? `${totalTime} min` : null} />
             <MetaItem icon={Utensils} label="Prep" value={recipe.prep_time ? `${recipe.prep_time} min` : null} />
@@ -176,7 +180,6 @@ export default async function PublicRecipePage({
           </div>
         </div>
 
-        {/* --- IMAGEN PRINCIPAL --- */}
         <div className="w-full max-w-5xl mx-auto px-4 mb-12">
           <div className="relative aspect-video md:aspect-[21/9] w-full overflow-hidden rounded-xl shadow-lg border border-border/30 bg-muted group">
             {recipe.image_url ? (
@@ -196,14 +199,10 @@ export default async function PublicRecipePage({
           </div>
         </div>
 
-        {/* --- CONTENIDO (Grid) --- */}
         <div className="container max-w-5xl mx-auto px-4 pb-20">
           <div className="grid gap-12 lg:grid-cols-[320px_1fr] items-start">
             
-            {/* COLUMNA IZQUIERDA: INGREDIENTES */}
             <aside className="space-y-8">
-              
-              {/* Sub-recetas */}
               {subRecipes.length > 0 && (
                 <Card className="border-primary/20 bg-primary/5 shadow-none overflow-hidden">
                   <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2 text-primary font-serif font-bold">
@@ -230,7 +229,6 @@ export default async function PublicRecipePage({
                 </Card>
               )}
 
-              {/* Lista de Ingredientes */}
               <div>
                 <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border flex items-center justify-between">
                   <span>Ingredients</span>
@@ -246,7 +244,6 @@ export default async function PublicRecipePage({
               </div>
             </aside>
 
-            {/* COLUMNA DERECHA: INSTRUCCIONES */}
             <div className="space-y-8">
               <h3 className="font-serif text-2xl font-bold mb-6 pb-2 border-b border-border">
                 Preparation
@@ -255,7 +252,6 @@ export default async function PublicRecipePage({
               <div className="space-y-10">
                 {recipe.steps.map((step: string, index: number) => (
                   <div key={index} className="group relative pl-4">
-                    {/* Número grande */}
                     <div className="absolute -left-4 -top-2 text-6xl font-serif font-bold text-muted-foreground/10 select-none group-hover:text-primary/10 transition-colors">
                       {index + 1}
                     </div>
