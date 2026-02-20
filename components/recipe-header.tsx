@@ -23,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
 
 export function RecipeHeader() {
   const router = useRouter()
@@ -47,25 +46,23 @@ export function RecipeHeader() {
         </Link>
         
         {/* --- ESCRITORIO: NAVEGACIÓN LIMPIA --- */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-6">
           
-          <nav className="flex items-center gap-1 mr-2">
+          <nav className="flex items-center gap-2">
+            <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
+              <Link href="/search"><Search className="mr-2 h-4 w-4" />Discover</Link>
+            </Button>
             <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
               <Link href="/cookbooks"><BookOpen className="mr-2 h-4 w-4" />Library</Link>
             </Button>
             <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
               <Link href="/saved"><Bookmark className="mr-2 h-4 w-4" />Saved</Link>
             </Button>
-            <Button variant="ghost" asChild size="sm" className="text-muted-foreground hover:text-foreground">
-              <Link href="/search"><Search className="mr-2 h-4 w-4" />Discover</Link>
-            </Button>
           </nav>
 
-          <Separator orientation="vertical" className="h-6 opacity-50 mx-2" />
-
-          {/* ACCIONES Y PERFIL */}
-          <div className="flex items-center gap-3 pl-2">
-            <Button asChild size="sm" className="rounded-full px-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center gap-3">
+            {/* Botón estándar, sin sombras extrañas y con el redondeo habitual */}
+            <Button asChild size="sm">
               <Link href="/recipes/new">
                 <Plus className="mr-1.5 h-4 w-4" />
                 New Recipe
@@ -100,7 +97,7 @@ export function RecipeHeader() {
           </div>
         </div>
 
-        {/* --- MÓVIL: SOLO EL MENÚ DE USUARIO (El resto va abajo) --- */}
+        {/* --- MÓVIL: SOLO EL MENÚ DE USUARIO --- */}
         <div className="md:hidden flex items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
